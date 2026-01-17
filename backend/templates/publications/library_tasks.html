@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Задачи библиотеки</h1>
+
+{% if processes %}
+  <ul class="list">
+    {% for p in processes %}
+      <li>
+        <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+        <div class="muted">
+          Автор: {{ p.author.display_name }} |
+          <a href="{% url 'publications:library_decide' p.pk %}">Принять решение</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет задач.</p>
+{% endif %}
+{% endblock %}

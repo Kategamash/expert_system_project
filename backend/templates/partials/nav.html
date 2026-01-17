@@ -1,0 +1,17 @@
+<nav class="nav">
+  <div class="nav__left">
+    <a href="{% url 'publications:dashboard' %}" class="nav__brand">ОЭК Публикации</a>
+  </div>
+
+  <div class="nav__right">
+    {% if user.is_authenticated %}
+      <a href="{% url 'publications:process_list' %}">Процессы</a>
+      <a href="{% url 'notifications:list' %}">Уведомления {% if unread_notifications_count %}<span class="badge">{{ unread_notifications_count }}</span>{% endif %}</a>
+      <a href="{% url 'accounts:profile' %}">Профиль</a>
+      <a href="{% url 'accounts:logout' %}">Выход</a>
+    {% else %}
+      <a href="{% url 'accounts:login' %}">Вход</a>
+      <a href="{% url 'accounts:register' %}">Регистрация</a>
+    {% endif %}
+  </div>
+</nav>

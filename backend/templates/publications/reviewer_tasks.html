@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Задачи рецензента</h1>
+
+{% if assignments %}
+  <ul class="list">
+    {% for a in assignments %}
+      <li>
+        Заявка #{{ a.process.pk }} — <a href="{% url 'publications:process_detail' a.process.pk %}">{{ a.process.title }}</a>
+        <div class="muted">
+          Статус заявки: {{ a.process.get_status_display }} |
+          Ваш вердикт: {{ a.get_verdict_display }}
+          {% if a.process.status == "INTERNAL_REVIEW" and a.verdict == "PENDING" %}
+            | <a href="{% url 'publications:reviewer_submit' a.pk %}">Заполнить рецензию</a>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет назначенных рецензий.</p>
+{% endif %}
+{% endblock %}

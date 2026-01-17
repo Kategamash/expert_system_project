@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Профиль</h1>
+
+<div class="card">
+  <p><b>Логин:</b> {{ user.username }}</p>
+  <p><b>Роль:</b> {{ user.get_role_display }}</p>
+</div>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Сохранить</button>
+</form>
+{% endblock %}

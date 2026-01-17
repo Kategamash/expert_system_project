@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16
+    container_name: oek_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oek_db}
+      POSTGRES_USER: ${POSTGRES_USER:-oek_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oek_pass}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build: .
+    container_name: oek_web
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  media_data:
+  static_data:

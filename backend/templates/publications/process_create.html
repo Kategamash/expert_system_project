@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Новая заявка</h1>
+
+<div class="card">
+  <h3>Шаблоны оформления</h3>
+  {% if templates %}
+    <ul class="list">
+      {% for t in templates %}
+        <li>
+          {{ t.name }} —
+          <a href="{% url 'publications:template_download' t.pk %}">Скачать</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">
+      Для вашей кафедры шаблонов пока нет. Админ может загрузить их в admin → PublicationTemplate.
+    </p>
+  {% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+
+  <h3>Параметры заявки</h3>
+  {{ p_form.as_p }}
+
+  <h3>Файлы</h3>
+  {{ d_form.as_p }}
+
+  <h3>Соавторы</h3>
+  {{ formset.management_form }}
+  <div id="coauthors">
+    {% for form in formset %}
+      <div class="subcard coauthor-row">
+        {{ form.as_p }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <p class="muted">
+    Чтобы добавить соавтора — заполните дополнительные строки (extra=1),
+    либо нажмите “Добавить строку”.
+  </p>
+
+  <button type="button" class="btn btn--secondary" onclick="addCoauthorRow()">Добавить строку</button>
+  <button class="btn" type="submit">Создать заявку</button>
+</form>
+
+<script>
+function addCoauthorRow() {
+  const container = document.getElementById('coauthors');
+  const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+  const idx = parseInt(totalForms.value, 10);
+
+  const empty = `
+    <div class="subcard coauthor-row">
+      <p>
+        <label for="id_form-${idx}-name">ФИО соавтора:</label>
+        <input type="text" name="form-${idx}-name" id="id_form-${idx}-name">
+      </p>
+      <p>
+        <label for="id_form-${idx}-email">Email соавтора:</label>
+        <input type="email" name="form-${idx}-email" id="id_form-${idx}-email">
+      </p>
+      <input type="hidden" name="form-${idx}-id" id="id_form-${idx}-id">
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', empty);
+  totalForms.value = idx + 1;
+}
+</script>
+{% endblock %}

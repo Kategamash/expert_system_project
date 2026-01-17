@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Заявка #{{ process.pk }}</h1>
+
+<div class="card">
+  <p><b>Название:</b> {{ process.title }}</p>
+  <p><b>Журнал:</b> {{ process.journal }}</p>
+  <p><b>Совет:</b> {{ process.council.council_number }} ({{ process.council.department }})</p>
+  <p><b>Члены совета:</b><br>{{ process.council.members|linebreaksbr }}</p>
+  <p><b>МИФИ:</b> {{ process.is_mifi|yesno:"Да,Нет" }}</p>
+  <p><b>Статус:</b> {{ process.get_status_display }}</p>
+
+  {% if process.status == "READY_FOR_DEFENSE" %}
+    <hr>
+    <p><b>Время защиты:</b> {{ process.defense_datetime|default:"не назначено" }}</p>
+    <p><b>Место защиты:</b> {{ process.defense_room|default:"—" }}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Файлы</h3>
+  {% if process.documents %}
+    <ul class="list">
+      <li>Статья: <a href="{{ process.documents.article_file.url }}">скачать</a></li>
+      <li>Литература: <a href="{{ process.documents.bibliography_file.url }}">скачать</a></li>
+      <li>Заполненный шаблон: <a href="{{ process.documents.filled_template_file.url }}">скачать</a></li>
+    </ul>
+  {% else %}
+    <p class="muted">Файлы не загружены.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Соавторы</h3>
+  {% if process.coauthors.all %}
+    <ul class="list">
+      {% for c in process.coauthors.all %}
+        <li>
+          {{ c.name }} ({{ c.email|default:"без email" }})
+          {% if c.consent_file %}
+            — согласие: <a href="{{ c.consent_file.url }}">скачать</a>
+          {% else %}
+            — согласие: <span class="muted">не загружено</span>
+            {% if user.role == "AUTHOR" and process.status == "WAITING_COAUTHOR_CONSENTS" %}
+              | <a href="{% url 'publications:upload_consent' process.pk c.pk %}">загрузить</a>
+            {% endif %}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Соавторов нет.</p>
+  {% endif %}
+</div>
+
+{% if library_form %}
+  <div class="card">
+    <h3>Решение библиотеки</h3>
+    <form method="post">
+      {% csrf_token %}
+      {{ library_form.as_p }}
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if reviewer_form %}
+  <div class="card">
+    <h3>Рецензия</h3>
+    <p class="muted">Рецензент: {{ assignment.reviewer.display_name }}</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ reviewer_form.as_p }}
+      <button class="btn" type="submit">Отправить рецензию</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if oek_form %}
+  <div class="card">
+    <h3>Решение ОЭК</h3>
+    <form method="post">
+      {% csrf_token %}
+      {{ oek_form.as_p }}
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if user.role == "AUTHOR" %}
+  {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
+    <form method="post" class="card">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="resubmit_internal">
+      <button class="btn" type="submit">Отправить на повторное рецензирование</button>
+      <p class="muted">Предполагается, что вы заменили файлы (в MVP — через admin; в расширении можно сделать форму перезагрузки).</p>
+    </form>
+  {% endif %}
+
+  {% if process.status == "OEK_NEEDS_FIX" %}
+    <form method="post" class="card">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="resubmit_oek">
+      <button class="btn" type="submit">Повторно отправить в ОЭК</button>
+      <p class="muted">Предполагается, что вы исправили пакет документов.</p>
+    </form>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

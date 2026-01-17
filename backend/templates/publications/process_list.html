@@ -1,0 +1,16 @@
+{% if processes %}
+  <ul class="list">
+    {% for p in processes %}
+      <li>
+        <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+        <div class="muted">
+          Статус: {{ p.get_status_display }} |
+          Журнал: {{ p.journal }} |
+          Совет: {{ p.council.council_number }}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет данных.</p>
+{% endif %}

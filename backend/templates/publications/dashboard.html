@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Личный кабинет</h1>
+
+<div class="card">
+  <p><b>Пользователь:</b> {{ user.display_name }}</p>
+  <p><b>Роль:</b> {{ user.get_role_display }}</p>
+</div>
+
+{% if user.role == "AUTHOR" %}
+  <div class="actions">
+    <a class="btn" href="{% url 'publications:process_create' %}">Создать новую заявку</a>
+  </div>
+
+  <h2>Мои заявки</h2>
+  {% include "publications/process_list.html" with processes=processes only %}
+
+{% elif user.role == "LIBRARY_HEAD" %}
+  <h2>Задачи библиотеки</h2>
+  <p class="muted">Проверка списка литературы.</p>
+  <a class="btn" href="{% url 'publications:library_tasks' %}">Открыть задачи</a>
+
+{% elif user.role == "REVIEWER" %}
+  <h2>Мои рецензии</h2>
+  <a class="btn" href="{% url 'publications:reviewer_tasks' %}">Открыть задания рецензента</a>
+
+{% elif user.role == "OEK" %}
+  <h2>Задачи ОЭК</h2>
+  <a class="btn" href="{% url 'publications:oek_tasks' %}">Открыть задачи ОЭК</a>
+
+{% elif user.role == "COMMISSION" %}
+  <h2>Готово к защите</h2>
+  {% if processes %}
+    <ul class="list">
+      {% for p in processes %}
+        <li>
+          <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+          <div class="muted">Защита: {{ p.defense_datetime|default:"не назначена" }} {{ p.defense_room }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Пока нет заявок, готовых к защите.</p>
+  {% endif %}
+{% else %}
+  <p class="muted">Нет специализированного дашборда для этой роли.</p>
+{% endif %}
+{% endblock %}

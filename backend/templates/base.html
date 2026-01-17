@@ -1,0 +1,17 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Система экспертного контроля публикаций</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  {% include "partials/nav.html" %}
+  <main class="container">
+    {% include "partials/messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

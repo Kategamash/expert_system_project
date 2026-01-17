@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Уведомления</h1>
+
+<div class="actions">
+  <a class="btn btn--secondary" href="{% url 'notifications:read_all' %}">Отметить все как прочитанные</a>
+</div>
+
+{% if notifications %}
+  <ul class="list">
+    {% for n in notifications %}
+      <li class="{% if not n.is_read %}unread{% endif %}">
+        <div>
+          <b>{{ n.created_at }}</b> — {{ n.message }}
+          {% if n.link %}
+            | <a href="{% url 'notifications:read' n.pk %}">перейти</a>
+          {% else %}
+            | <a href="{% url 'notifications:read' n.pk %}">отметить прочитанным</a>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Уведомлений нет.</p>
+{% endif %}
+{% endblock %}
