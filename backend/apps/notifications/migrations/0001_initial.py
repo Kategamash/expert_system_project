@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('publications', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -20,6 +21,7 @@ class Migration(migrations.Migration):
                 ("link", models.CharField(blank=True, max_length=300)),
                 ("is_read", models.BooleanField(default=False)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("process", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name="notifications", to="publications.process")),
                 ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="notifications", to=settings.AUTH_USER_MODEL)),
             ],
             options={

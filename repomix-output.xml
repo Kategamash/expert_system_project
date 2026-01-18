@@ -1,0 +1,2600 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.env.example
+.gitattributes
+backend/apps/accounts/admin.py
+backend/apps/accounts/apps.py
+backend/apps/accounts/forms.py
+backend/apps/accounts/management/commands/__init__.py
+backend/apps/accounts/management/commands/seed_demo.py
+backend/apps/accounts/migrations/__init__.py
+backend/apps/accounts/migrations/0001_initial.py
+backend/apps/accounts/models.py
+backend/apps/accounts/permissions.py
+backend/apps/accounts/tests.py
+backend/apps/accounts/urls.py
+backend/apps/accounts/views.py
+backend/apps/notifications/__init__.py
+backend/apps/notifications/admin.py
+backend/apps/notifications/apps.py
+backend/apps/notifications/context_processors.py
+backend/apps/notifications/migrations/__init__.py
+backend/apps/notifications/migrations/0001_initial.py
+backend/apps/notifications/models.py
+backend/apps/notifications/urls.py
+backend/apps/notifications/utils.py
+backend/apps/notifications/views.py
+backend/apps/publications/__init__.py
+backend/apps/publications/admin.py
+backend/apps/publications/apps.py
+backend/apps/publications/forms.py
+backend/apps/publications/migrations/__init__.py
+backend/apps/publications/migrations/0001_initial.py
+backend/apps/publications/models.py
+backend/apps/publications/services.py
+backend/apps/publications/urls.py
+backend/apps/publications/views.py
+backend/config/__init__.py
+backend/config/asgi.py
+backend/config/settings.py
+backend/config/urls.py
+backend/config/wsgi.py
+backend/manage.py
+backend/static/css/styles.css
+backend/templates/accounts/login.html
+backend/templates/accounts/profile.html
+backend/templates/accounts/register.html
+backend/templates/base.html
+backend/templates/notifications/detail.html
+backend/templates/notifications/list.html
+backend/templates/partials/messages.html
+backend/templates/partials/nav.html
+backend/templates/publications/dashboard.html
+backend/templates/publications/library_tasks.html
+backend/templates/publications/oek_tasks.html
+backend/templates/publications/process_create.html
+backend/templates/publications/process_detail.html
+backend/templates/publications/process_list.html
+backend/templates/publications/reviewer_tasks.html
+backend/templates/publications/upload_consent.html
+docker-compose.yml
+docker/entrypoint.sh
+Dockerfile
+requirements.txt
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/templates/notifications/detail.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Уведомление</h1>
+
+<div class="card">
+  <p><b>Дата:</b> {{ notification.created_at }}</p>
+  <p><b>Текст:</b> {{ notification.message }}</p>
+
+  {% if notification.link %}
+    <p><a class="btn btn--secondary" href="{{ notification.link }}">Перейти по ссылке</a></p>
+  {% endif %}
+
+  {% if process %}
+    <p><a class="btn" href="{% url 'publications:process_detail' process.pk %}">Открыть заявку</a></p>
+  {% endif %}
+</div>
+
+{% if library_comment %}
+  <div class="card">
+    <h3>Комментарий главы библиотеки</h3>
+    <p><b>Решение:</b> {{ library_comment.decision }}</p>
+    {% if library_comment.decided_at %}<p class="muted">{{ library_comment.decided_at }}</p>{% endif %}
+    <pre style="white-space: pre-wrap;">{{ library_comment.comment }}</pre>
+  </div>
+{% endif %}
+
+{% if reviewer_comments %}
+  <div class="card">
+    <h3>Комментарии рецензеров</h3>
+    {% for rc in reviewer_comments %}
+      <div class="subcard">
+        <p><b>Рецензер:</b> {{ rc.reviewer }}</p>
+        <p><b>Вердикт:</b> {{ rc.verdict }}</p>
+        {% if rc.decided_at %}<p class="muted">{{ rc.decided_at }}</p>{% endif %}
+        <pre style="white-space: pre-wrap;">{{ rc.comment }}</pre>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if process and user.role == "AUTHOR" %}
+  {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
+    <div class="card">
+      <h3>Действие</h3>
+      <a class="btn" href="{% url 'publications:reviewer_rework' process.pk %}">
+        Загрузить исправления и отправить на повторное рецензирование
+      </a>
+    </div>
+  {% endif %}
+
+  {% if process.status == "LIBRARY_NEEDS_FIX" %}
+    <div class="card">
+      <h3>Действие</h3>
+      <a class="btn" href="{% url 'publications:bibliography_rework' process.pk %}">
+        Загрузить исправленный список литературы и отправить на повторную проверку
+      </a>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
+</file>
+
+<file path=".env.example">
+DJANGO_SECRET_KEY=change-me-please
+DJANGO_DEBUG=1
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+POSTGRES_DB=oek_db
+POSTGRES_USER=oek_user
+POSTGRES_PASSWORD=oek_pass
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+</file>
+
+<file path=".gitattributes">
+# Auto detect text files and perform LF normalization
+* text=auto
+</file>
+
+<file path="backend/apps/accounts/admin.py">
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from .models import User
+
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    fieldsets = UserAdmin.fieldsets + (
+        ("Профиль и роль", {"fields": ("role", "fio", "department", "position", "person_status")}),
+    )
+    list_display = ("username", "email", "role", "fio", "department", "is_staff")
+    list_filter = ("role", "department", "is_staff", "is_superuser")
+</file>
+
+<file path="backend/apps/accounts/apps.py">
+from django.apps import AppConfig
+
+
+class AccountsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.accounts"
+    verbose_name = "Пользователи и роли"
+</file>
+
+<file path="backend/apps/accounts/forms.py">
+from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from .models import User
+
+
+class RegisterForm(UserCreationForm):
+    role = forms.ChoiceField(choices=User.Role.choices, label="Роль")
+    fio = forms.CharField(label="ФИО", max_length=255)
+    department = forms.CharField(label="Кафедра", max_length=255, required=False)
+    position = forms.CharField(label="Должность", max_length=255, required=False)
+    person_status = forms.ChoiceField(choices=User.PersonStatus.choices, label="Статус (студент/сотрудник)")
+    email = forms.EmailField(label="Email", required=False)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "email", "fio", "department", "position", "person_status", "role")
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = self.cleaned_data["role"]
+        user.fio = self.cleaned_data["fio"]
+        user.department = self.cleaned_data.get("department", "")
+        user.position = self.cleaned_data.get("position", "")
+        user.person_status = self.cleaned_data["person_status"]
+        user.email = self.cleaned_data.get("email", "")
+        if commit:
+            user.save()
+        return user
+
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(label="Логин")
+    password = forms.CharField(label="Пароль", widget=forms.PasswordInput)
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("fio", "department", "position", "person_status", "email")
+        labels = {
+            "fio": "ФИО",
+            "department": "Кафедра",
+            "position": "Должность",
+            "person_status": "Статус",
+            "email": "Email",
+        }
+</file>
+
+<file path="backend/apps/accounts/management/commands/__init__.py">
+
+</file>
+
+<file path="backend/apps/accounts/management/commands/seed_demo.py">
+from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+
+from apps.publications.models import Council, PublicationTemplate, Process, CoAuthor, ProcessDocuments
+from django.core.files.base import ContentFile
+
+
+User = get_user_model()
+
+
+class Command(BaseCommand):
+    help = "Создаёт тестовые данные (пользователи/шаблоны/пример заявок). Идемпотентно."
+
+    def handle(self, *args, **kwargs):
+        # superuser
+        if not User.objects.filter(username="admin").exists():
+            User.objects.create_superuser(username="admin", password="admin12345", email="admin@example.com")
+            self.stdout.write(self.style.SUCCESS("Created superuser admin/admin12345"))
+
+        # roles
+        users = [
+            ("author1", "AUTHOR", "Иванов Иван Иванович"),
+            ("oek1", "OEK", "Петров Пётр Петрович"),
+            ("lib1", "LIBRARY_HEAD", "Сидорова Мария Сергеевна"),
+            ("rev1", "REVIEWER", "Рецензент 1"),
+            ("rev2", "REVIEWER", "Рецензент 2"),
+            ("rev3", "REVIEWER", "Рецензент 3"),
+            ("comm1", "COMMISSION", "Член комиссии 1"),
+        ]
+        for username, role, fio in users:
+            if not User.objects.filter(username=username).exists():
+                u = User.objects.create_user(
+                    username=username,
+                    password="Passw0rd!234",
+                    role=role,
+                    fio=fio,
+                    department="Кафедра №1",
+                    position="Сотрудник",
+                )
+                self.stdout.write(self.style.SUCCESS(f"Created user {u.username} / Passw0rd!234"))
+
+        # councils
+        council, _ = Council.objects.get_or_create(
+            department="Кафедра №1",
+            council_number="Совет-101",
+            defaults={"members": "Иванов И.И.; Петров П.П.; Сидоров С.С."},
+        )
+
+        # publication template (a placeholder demo file)
+        if not PublicationTemplate.objects.exists():
+            tpl = PublicationTemplate(department="Кафедра №1", name="Шаблон оформления (DEMO)")
+            tpl.file.save("template_demo.txt", ContentFile("DEMO TEMPLATE FILE. Replace with your real docx."), save=True)
+            self.stdout.write(self.style.SUCCESS("Created demo publication template"))
+
+        author = User.objects.get(username="author1")
+
+        # process 1 (MIFI internal, with coauthor)
+        if not Process.objects.filter(title="Демо-заявка (МИФИ)").exists():
+            p1 = Process.objects.create(
+                author=author,
+                title="Демо-заявка (МИФИ)",
+                journal="Вестник МИФИ",
+                council=council,
+                is_mifi=True,
+                status="LIBRARY_REVIEW",
+            )
+            CoAuthor.objects.create(process=p1, name="Соавтор 1", email="coauthor1@example.com")
+
+            docs = ProcessDocuments(process=p1)
+            docs.article_file.save("article_demo.txt", ContentFile("DEMO ARTICLE"), save=False)
+            docs.bibliography_file.save("refs_demo.txt", ContentFile("DEMO REFS"), save=False)
+            docs.filled_template_file.save("filled_template_demo.txt", ContentFile("DEMO FILLED TEMPLATE"), save=False)
+            docs.save()
+
+            self.stdout.write(self.style.SUCCESS("Created process: Демо-заявка (МИФИ)"))
+
+        # process 2 (external, no internal review)
+        if not Process.objects.filter(title="Демо-заявка (внешний журнал)").exists():
+            p2 = Process.objects.create(
+                author=author,
+                title="Демо-заявка (внешний журнал)",
+                journal="Elsevier Journal",
+                council=council,
+                is_mifi=False,
+                status="LIBRARY_REVIEW",
+            )
+            docs = ProcessDocuments(process=p2)
+            docs.article_file.save("article_demo2.txt", ContentFile("DEMO ARTICLE 2"), save=False)
+            docs.bibliography_file.save("refs_demo2.txt", ContentFile("DEMO REFS 2"), save=False)
+            docs.filled_template_file.save("filled_template_demo2.txt", ContentFile("DEMO FILLED TEMPLATE 2"), save=False)
+            docs.save()
+
+            self.stdout.write(self.style.SUCCESS("Created process: Демо-заявка (внешний журнал)"))
+
+        self.stdout.write(self.style.SUCCESS("Seeding done."))
+</file>
+
+<file path="backend/apps/accounts/migrations/__init__.py">
+
+</file>
+
+<file path="backend/apps/accounts/migrations/0001_initial.py">
+# Generated manually for the project "Система экспертного контроля публикаций"
+from django.db import migrations, models
+import django.utils.timezone
+import django.contrib.auth.models
+import django.contrib.auth.validators
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        ("auth", "0012_alter_user_first_name_max_length"),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="User",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("password", models.CharField(max_length=128, verbose_name="password")),
+                ("last_login", models.DateTimeField(blank=True, null=True, verbose_name="last login")),
+                ("is_superuser", models.BooleanField(
+                    default=False,
+                    help_text="Designates that this user has all permissions without explicitly assigning them.",
+                    verbose_name="superuser status",
+                )),
+                ("username", models.CharField(
+                    error_messages={"unique": "A user with that username already exists."},
+                    help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+                    max_length=150,
+                    unique=True,
+                    validators=[django.contrib.auth.validators.UnicodeUsernameValidator()],
+                    verbose_name="username",
+                )),
+                ("first_name", models.CharField(blank=True, max_length=150, verbose_name="first name")),
+                ("last_name", models.CharField(blank=True, max_length=150, verbose_name="last name")),
+                ("email", models.EmailField(blank=True, max_length=254, verbose_name="email address")),
+                ("is_staff", models.BooleanField(
+                    default=False,
+                    help_text="Designates whether the user can log into this admin site.",
+                    verbose_name="staff status",
+                )),
+                ("is_active", models.BooleanField(
+                    default=True,
+                    help_text="Designates whether this user should be treated as active. Unselect this instead of deleting accounts.",
+                    verbose_name="active",
+                )),
+                ("date_joined", models.DateTimeField(default=django.utils.timezone.now, verbose_name="date joined")),
+
+                # our custom fields
+                ("role", models.CharField(choices=[
+                    ("AUTHOR", "Автор/Оформитель"),
+                    ("OEK", "Сотрудник ОЭК"),
+                    ("REVIEWER", "Рецензент"),
+                    ("LIBRARY_HEAD", "Начальник отдела библиотеки"),
+                    ("COMMISSION", "Член экспертной комиссии"),
+                ], default="AUTHOR", max_length=32)),
+                ("fio", models.CharField(blank=True, max_length=255, verbose_name="ФИО")),
+                ("department", models.CharField(blank=True, max_length=255, verbose_name="Кафедра")),
+                ("position", models.CharField(blank=True, max_length=255, verbose_name="Должность")),
+                ("person_status", models.CharField(choices=[
+                    ("STUDENT", "Студент"),
+                    ("STAFF", "Сотрудник"),
+                ], default="STAFF", max_length=16)),
+
+                ("groups", models.ManyToManyField(
+                    blank=True,
+                    help_text="The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+                    related_name="user_set",
+                    related_query_name="user",
+                    to="auth.group",
+                    verbose_name="groups",
+                )),
+                ("user_permissions", models.ManyToManyField(
+                    blank=True,
+                    help_text="Specific permissions for this user.",
+                    related_name="user_set",
+                    related_query_name="user",
+                    to="auth.permission",
+                    verbose_name="user permissions",
+                )),
+            ],
+            options={
+                "abstract": False,
+            },
+            managers=[
+                ("objects", django.contrib.auth.models.UserManager()),
+            ],
+        ),
+    ]
+</file>
+
+<file path="backend/apps/accounts/models.py">
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+
+class User(AbstractUser):
+    class Role(models.TextChoices):
+        AUTHOR = "AUTHOR", "Автор/Оформитель"
+        OEK = "OEK", "Сотрудник ОЭК"
+        REVIEWER = "REVIEWER", "Рецензент"
+        LIBRARY_HEAD = "LIBRARY_HEAD", "Начальник отдела библиотеки"
+        COMMISSION = "COMMISSION", "Член экспертной комиссии"
+
+    class PersonStatus(models.TextChoices):
+        STUDENT = "STUDENT", "Студент"
+        STAFF = "STAFF", "Сотрудник"
+
+    role = models.CharField(max_length=32, choices=Role.choices, default=Role.AUTHOR)
+    fio = models.CharField("ФИО", max_length=255, blank=True)
+    department = models.CharField("Кафедра", max_length=255, blank=True)
+    position = models.CharField("Должность", max_length=255, blank=True)
+    person_status = models.CharField("Статус", max_length=16, choices=PersonStatus.choices, default=PersonStatus.STAFF)
+
+    def display_name(self):
+        if self.fio:
+            return self.fio
+        full = f"{self.first_name} {self.last_name}".strip()
+        return full or self.username
+
+    def __str__(self):
+        return f"{self.username} ({self.get_role_display()})"
+</file>
+
+<file path="backend/apps/accounts/permissions.py">
+from functools import wraps
+from django.http import HttpResponseForbidden
+
+
+def role_required(*allowed_roles):
+    """
+    Usage:
+      @role_required(User.Role.OEK, User.Role.LIBRARY_HEAD)
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped(request, *args, **kwargs):
+            user = request.user
+            if not user.is_authenticated:
+                return HttpResponseForbidden("Требуется вход в систему.")
+            if user.role not in allowed_roles and not user.is_superuser:
+                return HttpResponseForbidden("Недостаточно прав.")
+            return view_func(request, *args, **kwargs)
+        return _wrapped
+    return decorator
+</file>
+
+<file path="backend/apps/accounts/tests.py">
+from django.test import TestCase
+
+
+class AccountsSmokeTest(TestCase):
+    def test_ok(self):
+        self.assertTrue(True)
+</file>
+
+<file path="backend/apps/accounts/urls.py">
+from django.urls import path
+from .views import register_view, login_view, logout_view, profile_view
+
+app_name = "accounts"
+
+urlpatterns = [
+    path("register/", register_view, name="register"),
+    path("login/", login_view, name="login"),
+    path("logout/", logout_view, name="logout"),
+    path("profile/", profile_view, name="profile"),
+]
+</file>
+
+<file path="backend/apps/accounts/views.py">
+from django.contrib import messages
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+
+from .forms import RegisterForm, LoginForm, ProfileForm
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect("publications:dashboard")
+
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Регистрация выполнена, вы вошли в систему.")
+            return redirect("publications:dashboard")
+    else:
+        form = RegisterForm()
+
+    return render(request, "accounts/register.html", {"form": form})
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect("publications:dashboard")
+
+    if request.method == "POST":
+        form = LoginForm(request, data=request.POST)
+        if form.is_valid():
+            login(request, form.get_user())
+            return redirect("publications:dashboard")
+    else:
+        form = LoginForm(request)
+
+    return render(request, "accounts/login.html", {"form": form})
+
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect("accounts:login")
+
+
+@login_required
+def profile_view(request):
+    if request.method == "POST":
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Профиль обновлён.")
+            return redirect("accounts:profile")
+    else:
+        form = ProfileForm(instance=request.user)
+
+    return render(request, "accounts/profile.html", {"form": form})
+</file>
+
+<file path="backend/apps/notifications/__init__.py">
+
+</file>
+
+<file path="backend/apps/notifications/admin.py">
+from django.contrib import admin
+from .models import Notification
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("user", "message", "is_read", "created_at")
+    list_filter = ("is_read", "created_at")
+    search_fields = ("message", "user__username", "user__fio")
+</file>
+
+<file path="backend/apps/notifications/apps.py">
+from django.apps import AppConfig
+
+
+class NotificationsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.notifications"
+    verbose_name = "Уведомления"
+</file>
+
+<file path="backend/apps/notifications/context_processors.py">
+def notifications_context(request):
+    if not request.user.is_authenticated:
+        return {"unread_notifications_count": 0}
+    return {"unread_notifications_count": request.user.notifications.filter(is_read=False).count()}
+</file>
+
+<file path="backend/apps/notifications/migrations/__init__.py">
+
+</file>
+
+<file path="backend/apps/notifications/migrations/0001_initial.py">
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="Notification",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("message", models.CharField(max_length=500)),
+                ("link", models.CharField(blank=True, max_length=300)),
+                ("is_read", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="notifications", to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                "ordering": ("-created_at",),
+            },
+        ),
+    ]
+</file>
+
+<file path="backend/apps/notifications/models.py">
+from django.conf import settings
+from django.db import models
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    message = models.CharField(max_length=500)
+    link = models.CharField(max_length=300, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Notification({self.user_id}, read={self.is_read})"
+</file>
+
+<file path="backend/apps/notifications/urls.py">
+from django.urls import path
+from .views import notification_list, mark_read, mark_all_read, notification_detail
+
+app_name = "notifications"
+
+urlpatterns = [
+    path("", notification_list, name="list"),
+    path("<int:pk>/", notification_detail, name="detail"),  # ДОБАВИТЬ
+    path("read/<int:pk>/", mark_read, name="read"),
+    path("read-all/", mark_all_read, name="read_all"),
+]
+</file>
+
+<file path="backend/apps/notifications/utils.py">
+from .models import Notification
+
+def notify(user, message: str, link: str = "", process=None):
+    if user is None:
+        return
+    Notification.objects.create(user=user, message=message, link=link, process=process)
+</file>
+
+<file path="backend/apps/notifications/views.py">
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+
+from .models import Notification
+from apps.publications.models import ReviewerAssignment
+
+@login_required
+def notification_list(request):
+    qs = Notification.objects.filter(user=request.user)
+    return render(request, "notifications/list.html", {"notifications": qs})
+
+
+@login_required
+def notification_detail(request, pk: int):
+    n = get_object_or_404(Notification, pk=pk, user=request.user)
+
+    if not n.is_read:
+        n.is_read = True
+        n.save(update_fields=["is_read"])
+
+    process = n.process
+
+    reviewer_comments = []
+    library_comment = None
+
+    if process:
+        # Комментарии рецензеров (все непустые, не PENDING)
+        qs = (process.review_assignments
+              .exclude(comment="")
+              .exclude(verdict=ReviewerAssignment.Verdict.PENDING)
+              .select_related("reviewer")
+              .order_by("reviewer_id"))
+
+        for a in qs:
+            reviewer_comments.append({
+                "reviewer": a.reviewer.display_name(),
+                "verdict": a.get_verdict_display(),
+                "comment": a.comment,
+                "decided_at": a.decided_at,
+            })
+
+        # Комментарий библиотеки
+        ld = getattr(process, "library_decision", None)
+        if ld and ld.comment:
+            library_comment = {
+                "decision": ld.get_decision_display(),
+                "comment": ld.comment,
+                "decided_at": ld.decided_at,
+            }
+
+    return render(request, "notifications/detail.html", {
+        "notification": n,
+        "process": process,
+        "reviewer_comments": reviewer_comments,
+        "library_comment": library_comment,
+    })
+
+
+@login_required
+def mark_read(request, pk: int):
+    n = get_object_or_404(Notification, pk=pk, user=request.user)
+    n.is_read = True
+    n.save(update_fields=["is_read"])
+    return redirect("notifications:list")
+
+
+@login_required
+def mark_all_read(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect("notifications:list")
+</file>
+
+<file path="backend/apps/publications/__init__.py">
+
+</file>
+
+<file path="backend/apps/publications/admin.py">
+from django.contrib import admin
+from .models import (
+    Council, PublicationTemplate,
+    Process, CoAuthor, ProcessDocuments,
+    LibraryDecision, ReviewerAssignment, OEKDecision
+)
+
+
+@admin.register(Council)
+class CouncilAdmin(admin.ModelAdmin):
+    list_display = ("department", "council_number")
+    search_fields = ("department", "council_number", "members")
+
+
+@admin.register(PublicationTemplate)
+class PublicationTemplateAdmin(admin.ModelAdmin):
+    list_display = ("department", "name", "file")
+    search_fields = ("department", "name")
+
+
+class CoAuthorInline(admin.TabularInline):
+    model = CoAuthor
+    extra = 0
+
+
+class DocumentsInline(admin.StackedInline):
+    model = ProcessDocuments
+    extra = 0
+
+
+@admin.register(Process)
+class ProcessAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "author", "status", "is_mifi", "created_at", "updated_at")
+    list_filter = ("status", "is_mifi", "council")
+    search_fields = ("title", "journal", "author__username", "author__fio")
+    inlines = [CoAuthorInline, DocumentsInline]
+
+
+@admin.register(LibraryDecision)
+class LibraryDecisionAdmin(admin.ModelAdmin):
+    list_display = ("process", "decision", "librarian", "decided_at")
+
+
+@admin.register(ReviewerAssignment)
+class ReviewerAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("process", "reviewer", "verdict", "decided_at")
+    list_filter = ("verdict",)
+
+
+@admin.register(OEKDecision)
+class OEKDecisionAdmin(admin.ModelAdmin):
+    list_display = ("process", "decision", "oek_user", "decided_at")
+</file>
+
+<file path="backend/apps/publications/apps.py">
+from django.apps import AppConfig
+
+
+class PublicationsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.publications"
+    verbose_name = "Заявки и согласования"
+</file>
+
+<file path="backend/apps/publications/forms.py">
+from django import forms
+from django.forms import modelformset_factory
+from .models import Process, CoAuthor, ProcessDocuments, LibraryDecision, ReviewerAssignment, OEKDecision
+
+
+class ProcessCreateForm(forms.ModelForm):
+    class Meta:
+        model = Process
+        fields = ("title", "journal", "council", "is_mifi")
+        labels = {
+            "title": "Название работы",
+            "journal": "Журнал",
+            "council": "Номер совета",
+            "is_mifi": "Публикация в рамках МИФИ (нужно внутреннее рецензирование)",
+        }
+
+
+class DocumentsForm(forms.ModelForm):
+    class Meta:
+        model = ProcessDocuments
+        fields = ("article_file", "bibliography_file", "filled_template_file")
+        labels = {
+            "article_file": "Файл статьи/тезисов",
+            "bibliography_file": "Список литературы (отдельный файл)",
+            "filled_template_file": "Заполненный шаблон",
+        }
+
+
+class CoAuthorForm(forms.ModelForm):
+    class Meta:
+        model = CoAuthor
+        fields = ("name", "email")
+        labels = {"name": "ФИО соавтора", "email": "Email соавтора"}
+
+
+CoAuthorFormSet = modelformset_factory(
+    CoAuthor,
+    form=CoAuthorForm,
+    extra=1,
+    can_delete=True,
+)
+
+
+class UploadConsentForm(forms.ModelForm):
+    class Meta:
+        model = CoAuthor
+        fields = ("consent_file",)
+        labels = {"consent_file": "Скан согласия соавтора"}
+
+
+class LibraryDecisionForm(forms.ModelForm):
+    class Meta:
+        model = LibraryDecision
+        fields = ("decision", "comment")
+        labels = {"decision": "Решение", "comment": "Комментарий"}
+
+
+class ReviewerVerdictForm(forms.ModelForm):
+    class Meta:
+        model = ReviewerAssignment
+        fields = ("verdict", "comment")
+        labels = {"verdict": "Вердикт", "comment": "Комментарий"}
+
+
+class OEKDecisionForm(forms.ModelForm):
+    defense_datetime = forms.DateTimeField(
+        required=False,
+        label="Назначить дату/время защиты (опционально)",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
+    defense_room = forms.CharField(required=False, label="Место защиты (опционально)")
+
+    class Meta:
+        model = OEKDecision
+        fields = ("decision", "comment")
+        labels = {"decision": "Решение", "comment": "Комментарий"}
+</file>
+
+<file path="backend/apps/publications/migrations/__init__.py">
+
+</file>
+
+<file path="backend/apps/publications/migrations/0001_initial.py">
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="Council",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("department", models.CharField(max_length=255, verbose_name="Кафедра")),
+                ("council_number", models.CharField(max_length=64, verbose_name="Номер совета")),
+                ("members", models.TextField(blank=True, verbose_name="Члены совета")),
+            ],
+            options={
+                "ordering": ("department", "council_number"),
+                "unique_together": {("department", "council_number")},
+            },
+        ),
+        migrations.CreateModel(
+            name="PublicationTemplate",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("department", models.CharField(max_length=255, verbose_name="Кафедра")),
+                ("name", models.CharField(max_length=255, verbose_name="Название шаблона")),
+                ("file", models.FileField(upload_to="templates/")),
+            ],
+            options={
+                "ordering": ("department", "name"),
+            },
+        ),
+        migrations.CreateModel(
+            name="Process",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("title", models.CharField(max_length=400, verbose_name="Название работы")),
+                ("journal", models.CharField(max_length=255, verbose_name="Журнал")),
+                ("is_mifi", models.BooleanField(default=False, verbose_name="Публикация в рамках МИФИ")),
+                ("status", models.CharField(choices=[
+                    ("DRAFT", "Черновик"),
+                    ("WAITING_COAUTHOR_CONSENTS", "Ожидаются согласия соавторов"),
+                    ("LIBRARY_REVIEW", "Проверка библиотеки"),
+                    ("LIBRARY_NEEDS_FIX", "Библиотека: требуется исправление"),
+                    ("INTERNAL_REVIEW", "Внутреннее рецензирование"),
+                    ("INTERNAL_REVIEW_NEEDS_FIX", "Рецензирование: требуется исправление"),
+                    ("OEK_REVIEW", "Проверка ОЭК"),
+                    ("OEK_NEEDS_FIX", "ОЭК: требуется исправление"),
+                    ("READY_FOR_DEFENSE", "Готово к очной защите"),
+                    ("REJECTED", "Отклонено"),
+                ], default="DRAFT", max_length=64)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("defense_datetime", models.DateTimeField(blank=True, null=True, verbose_name="Время защиты")),
+                ("defense_room", models.CharField(blank=True, max_length=128, verbose_name="Аудитория/место защиты")),
+                ("author", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="processes", to=settings.AUTH_USER_MODEL)),
+                ("council", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="processes", to="publications.council")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ProcessDocuments",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("article_file", models.FileField(upload_to="articles/", verbose_name="Файл статьи/тезисов")),
+                ("bibliography_file", models.FileField(upload_to="bibliography/", verbose_name="Список литературы")),
+                ("filled_template_file", models.FileField(upload_to="filled_templates/", verbose_name="Заполненный шаблон")),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("process", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="documents", to="publications.process")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="CoAuthor",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=255, verbose_name="ФИО соавтора")),
+                ("email", models.EmailField(blank=True, max_length=254, verbose_name="Email соавтора")),
+                ("consent_file", models.FileField(blank=True, null=True, upload_to="coauthor_consents/", verbose_name="Согласие соавтора (скан)")),
+                ("process", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="coauthors", to="publications.process")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="LibraryDecision",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("decision", models.CharField(choices=[
+                    ("PENDING", "Ожидает"),
+                    ("APPROVED", "Согласовано"),
+                    ("REJECTED", "Отклонено"),
+                ], default="PENDING", max_length=16)),
+                ("comment", models.TextField(blank=True, verbose_name="Комментарий")),
+                ("decided_at", models.DateTimeField(blank=True, null=True)),
+                ("librarian", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ("process", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="library_decision", to="publications.process")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="OEKDecision",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("decision", models.CharField(choices=[
+                    ("PENDING", "Ожидает"),
+                    ("APPROVED", "Согласовано"),
+                    ("REJECTED", "Отклонено"),
+                ], default="PENDING", max_length=16)),
+                ("comment", models.TextField(blank=True, verbose_name="Комментарий")),
+                ("decided_at", models.DateTimeField(blank=True, null=True)),
+                ("oek_user", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ("process", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="oek_decision", to="publications.process")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ReviewerAssignment",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("verdict", models.CharField(choices=[
+                    ("PENDING", "Ожидает"),
+                    ("RECOMMEND", "Рекомендовать"),
+                    ("RECOMMEND_AFTER_FIX", "Рекомендовать после исправлений"),
+                    ("NOT_RECOMMEND", "Не рекомендовать"),
+                ], default="PENDING", max_length=32)),
+                ("comment", models.TextField(blank=True, verbose_name="Комментарий")),
+                ("decided_at", models.DateTimeField(blank=True, null=True)),
+                ("process", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="review_assignments", to="publications.process")),
+                ("reviewer", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="review_tasks", to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                "unique_together": {("process", "reviewer")},
+            },
+        ),
+    ]
+</file>
+
+<file path="backend/apps/publications/models.py">
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
+
+
+class Council(models.Model):
+    department = models.CharField("Кафедра", max_length=255)
+    council_number = models.CharField("Номер совета", max_length=64)
+    members = models.TextField("Члены совета", blank=True)
+
+    class Meta:
+        unique_together = ("department", "council_number")
+        ordering = ("department", "council_number")
+
+    def __str__(self):
+        return f"{self.department} / {self.council_number}"
+
+
+class PublicationTemplate(models.Model):
+    department = models.CharField("Кафедра", max_length=255)
+    name = models.CharField("Название шаблона", max_length=255)
+    file = models.FileField(upload_to="templates/")
+
+    class Meta:
+        ordering = ("department", "name")
+
+    def __str__(self):
+        return f"{self.department}: {self.name}"
+
+
+class Process(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Черновик"
+        WAITING_COAUTHOR_CONSENTS = "WAITING_COAUTHOR_CONSENTS", "Ожидаются согласия соавторов"
+        LIBRARY_REVIEW = "LIBRARY_REVIEW", "Проверка библиотеки"
+        LIBRARY_NEEDS_FIX = "LIBRARY_NEEDS_FIX", "Библиотека: требуется исправление"
+        INTERNAL_REVIEW = "INTERNAL_REVIEW", "Внутреннее рецензирование"
+        INTERNAL_REVIEW_NEEDS_FIX = "INTERNAL_REVIEW_NEEDS_FIX", "Рецензирование: требуется исправление"
+        OEK_REVIEW = "OEK_REVIEW", "Проверка ОЭК"
+        OEK_NEEDS_FIX = "OEK_NEEDS_FIX", "ОЭК: требуется исправление"
+        READY_FOR_DEFENSE = "READY_FOR_DEFENSE", "Готово к очной защите"
+        REJECTED = "REJECTED", "Отклонено"
+
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="processes")
+    title = models.CharField("Название работы", max_length=400)
+    journal = models.CharField("Журнал", max_length=255)
+    council = models.ForeignKey(Council, on_delete=models.PROTECT, related_name="processes")
+    is_mifi = models.BooleanField("Публикация в рамках МИФИ", default=False)
+
+    status = models.CharField(max_length=64, choices=Status.choices, default=Status.DRAFT)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    defense_datetime = models.DateTimeField("Время защиты", null=True, blank=True)
+    defense_room = models.CharField("Аудитория/место защиты", max_length=128, blank=True)
+
+    def __str__(self):
+        return f"#{self.pk} {self.title} ({self.get_status_display()})"
+
+
+class CoAuthor(models.Model):
+    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="coauthors")
+    name = models.CharField("ФИО соавтора", max_length=255)
+    email = models.EmailField("Email соавтора", blank=True)
+    consent_file = models.FileField("Согласие соавтора (скан)", upload_to="coauthor_consents/", blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} (process={self.process_id})"
+
+
+class ProcessDocuments(models.Model):
+    process = models.OneToOneField(Process, on_delete=models.CASCADE, related_name="documents")
+
+    article_file = models.FileField("Файл статьи/тезисов", upload_to="articles/")
+    bibliography_file = models.FileField("Список литературы", upload_to="bibliography/")
+    filled_template_file = models.FileField("Заполненный шаблон", upload_to="filled_templates/")
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Documents(process={self.process_id})"
+
+
+class LibraryDecision(models.Model):
+    class Decision(models.TextChoices):
+        PENDING = "PENDING", "Ожидает"
+        APPROVED = "APPROVED", "Согласовано"
+        REJECTED = "REJECTED", "Отклонено"
+
+    process = models.OneToOneField(Process, on_delete=models.CASCADE, related_name="library_decision")
+    librarian = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    decision = models.CharField(max_length=16, choices=Decision.choices, default=Decision.PENDING)
+    comment = models.TextField("Комментарий", blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"LibraryDecision(process={self.process_id}, {self.decision})"
+
+
+class ReviewerAssignment(models.Model):
+    class Verdict(models.TextChoices):
+        PENDING = "PENDING", "Ожидает"
+        RECOMMEND = "RECOMMEND", "Рекомендовать"
+        RECOMMEND_AFTER_FIX = "RECOMMEND_AFTER_FIX", "Рекомендовать после исправлений"
+        NOT_RECOMMEND = "NOT_RECOMMEND", "Не рекомендовать"
+
+    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="review_assignments")
+    reviewer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="review_tasks")
+    verdict = models.CharField(max_length=32, choices=Verdict.choices, default=Verdict.PENDING)
+    comment = models.TextField("Комментарий", blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("process", "reviewer")
+
+    def __str__(self):
+        return f"Assignment(process={self.process_id}, reviewer={self.reviewer_id}, {self.verdict})"
+
+
+class OEKDecision(models.Model):
+    class Decision(models.TextChoices):
+        PENDING = "PENDING", "Ожидает"
+        APPROVED = "APPROVED", "Согласовано"
+        REJECTED = "REJECTED", "Отклонено"
+
+    process = models.OneToOneField(Process, on_delete=models.CASCADE, related_name="oek_decision")
+    oek_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    decision = models.CharField(max_length=16, choices=Decision.choices, default=Decision.PENDING)
+    comment = models.TextField("Комментарий", blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"OEKDecision(process={self.process_id}, {self.decision})"
+</file>
+
+<file path="backend/apps/publications/services.py">
+import random
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from apps.notifications.utils import notify
+from .models import Process, LibraryDecision, ReviewerAssignment, OEKDecision
+
+User = get_user_model()
+
+
+def start_or_advance_after_creation(process: Process):
+    """
+    После создания заявки:
+    - если есть соавторы -> ждём согласия
+    - иначе -> отправляем в библиотеку
+    """
+    if process.coauthors.exists():
+        process.status = Process.Status.WAITING_COAUTHOR_CONSENTS
+        process.save(update_fields=["status"])
+        notify(process.author, f"Заявка #{process.pk}: загрузите согласия соавторов.", link=f"/process/{process.pk}/", process=process)
+    else:
+        send_to_library(process)
+
+
+def all_coauthor_consents_uploaded(process: Process) -> bool:
+    if not process.coauthors.exists():
+        return True
+    return all(bool(c.consent_file) for c in process.coauthors.all())
+
+
+def try_advance_after_coauthor_consents(process: Process):
+    if process.status != Process.Status.WAITING_COAUTHOR_CONSENTS:
+        return
+    if all_coauthor_consents_uploaded(process):
+        send_to_library(process)
+
+
+def send_to_library(process: Process):
+    process.status = Process.Status.LIBRARY_REVIEW
+    process.save(update_fields=["status"])
+
+    LibraryDecision.objects.get_or_create(process=process)
+
+    librarian = User.objects.filter(role=User.Role.LIBRARY_HEAD).order_by("id").first()
+    if librarian:
+        notify(librarian, f"Новая задача: проверить литературу по заявке #{process.pk}", link=f"/tasks/library/")
+    notify(process.author, f"Заявка #{process.pk} отправлена в библиотеку на проверку.", link=f"/process/{process.pk}/", process=process)
+
+
+def library_apply_decision(process: Process, approved: bool, comment: str, librarian: User):
+    ld, _ = LibraryDecision.objects.get_or_create(process=process)
+    ld.librarian = librarian
+    ld.comment = comment
+    ld.decided_at = timezone.now()
+
+    if approved:
+        ld.decision = LibraryDecision.Decision.APPROVED
+        ld.save()
+
+        if process.is_mifi:
+            assign_reviewers(process)
+        else:
+            send_to_oek(process)
+
+        notify(process.author, f"Библиотека согласовала заявку #{process.pk}.", link=f"/process/{process.pk}/", process=process)
+    else:
+        ld.decision = LibraryDecision.Decision.REJECTED
+        ld.save()
+        process.status = Process.Status.LIBRARY_NEEDS_FIX
+        process.save(update_fields=["status"])
+        notify(process.author, f"Библиотека отклонила заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
+
+
+def reset_reviewers(process: Process):
+    # set all to pending, clear decided_at/comment/verdict
+    for a in process.review_assignments.all():
+        a.verdict = ReviewerAssignment.Verdict.PENDING
+        a.comment = ""
+        a.decided_at = None
+        a.save()
+
+
+def assign_reviewers(process: Process):
+    process.status = Process.Status.INTERNAL_REVIEW
+    process.save(update_fields=["status"])
+
+    reviewers = list(User.objects.filter(role=User.Role.REVIEWER).order_by("id"))
+    if len(reviewers) < 3:
+        # fallback: assign whoever exists
+        chosen = reviewers
+    else:
+        chosen = random.sample(reviewers, 3)
+
+    # Create assignments (idempotent-ish)
+    for r in chosen:
+        ReviewerAssignment.objects.get_or_create(process=process, reviewer=r)
+
+    for r in chosen:
+        notify(r, f"Новая рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
+
+    notify(process.author, f"Заявка #{process.pk} отправлена на внутреннее рецензирование.", link=f"/process/{process.pk}/", process=process)
+
+
+def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
+    assignment.verdict = verdict
+    assignment.comment = comment
+    assignment.decided_at = timezone.now()
+    assignment.save()
+
+    process = assignment.process
+    notify(process.author, f"Получена рецензия по заявке #{process.pk} от {assignment.reviewer.display_name()}.", link=f"/process/{process.pk}/", process=process)
+
+    # If all decided -> finalize stage
+    if process.review_assignments.filter(verdict=ReviewerAssignment.Verdict.PENDING).exists():
+        return
+
+    verdicts = list(process.review_assignments.values_list("verdict", flat=True))
+    not_rec = verdicts.count(ReviewerAssignment.Verdict.NOT_RECOMMEND)
+    after_fix = verdicts.count(ReviewerAssignment.Verdict.RECOMMEND_AFTER_FIX)
+    rec = verdicts.count(ReviewerAssignment.Verdict.RECOMMEND)
+
+    # rule: if 2 of 3 NOT -> rejected
+    if not_rec >= 2:
+        process.status = Process.Status.REJECTED
+        process.save(update_fields=["status"])
+        notify(process.author, f"Заявка #{process.pk} отклонена по результатам рецензирования (>=2 'Не рекомендовать').", link=f"/process/{process.pk}/", process=process)
+        return
+
+    # if any AFTER_FIX -> needs fix
+    if after_fix >= 1:
+        process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
+        process.save(update_fields=["status"])
+        notify(process.author, f"Заявка #{process.pk}: требуется исправление по рецензиям и повторная отправка.", link=f"/process/{process.pk}/", process=process)
+        return
+
+    # else if 2 recommend -> go next
+    if rec >= 2:
+        send_to_oek(process)
+        return
+
+    # fallback
+    process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
+    process.save(update_fields=["status"])
+    notify(process.author, f"Заявка #{process.pk}: требуется уточнение/исправление по рецензиям.", link=f"/process/{process.pk}/", process=process)
+
+
+def author_resubmit_after_internal_fix(process: Process):
+    """
+    Автор исправил материалы и отправляет снова тем же рецензентам.
+    """
+    if process.status != Process.Status.INTERNAL_REVIEW_NEEDS_FIX:
+        return
+    reset_reviewers(process)
+    process.status = Process.Status.INTERNAL_REVIEW
+    process.save(update_fields=["status"])
+    for a in process.review_assignments.all():
+        notify(a.reviewer, f"Повторная рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
+    notify(process.author, f"Заявка #{process.pk} отправлена на повторное рецензирование.", link=f"/process/{process.pk}/", process=process)
+
+
+def send_to_oek(process: Process):
+    process.status = Process.Status.OEK_REVIEW
+    process.save(update_fields=["status"])
+
+    OEKDecision.objects.get_or_create(process=process)
+
+    oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
+    if oek_user:
+        notify(oek_user, f"Новая задача ОЭК: проверить заявку #{process.pk}", link=f"/tasks/oek/")
+    notify(process.author, f"Заявка #{process.pk} отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
+
+
+def oek_apply_decision(process: Process, approved: bool, comment: str, oek_user: User, defense_datetime=None, defense_room=""):
+    od, _ = OEKDecision.objects.get_or_create(process=process)
+    od.oek_user = oek_user
+    od.comment = comment
+    od.decided_at = timezone.now()
+
+    if approved:
+        od.decision = OEKDecision.Decision.APPROVED
+        od.save()
+
+        process.status = Process.Status.READY_FOR_DEFENSE
+        if defense_datetime:
+            process.defense_datetime = defense_datetime
+        if defense_room is not None:
+            process.defense_room = defense_room
+        process.save(update_fields=["status", "defense_datetime", "defense_room"])
+
+        notify(process.author, f"ОЭК согласовал заявку #{process.pk}. Статус: готово к защите.", link=f"/process/{process.pk}/", process=process)
+
+        # notify commission members
+        commission_users = User.objects.filter(role=User.Role.COMMISSION)
+        for u in commission_users:
+            notify(u, f"Новая заявка готова к защите: #{process.pk}", link=f"/process/{process.pk}/")
+    else:
+        od.decision = OEKDecision.Decision.REJECTED
+        od.save()
+        process.status = Process.Status.OEK_NEEDS_FIX
+        process.save(update_fields=["status"])
+        notify(process.author, f"ОЭК отклонил заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
+
+
+def author_resubmit_after_oek_fix(process: Process):
+    if process.status != Process.Status.OEK_NEEDS_FIX:
+        return
+    process.status = Process.Status.OEK_REVIEW
+    process.save(update_fields=["status"])
+    oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
+    if oek_user:
+        notify(oek_user, f"Повторная проверка ОЭК: заявка #{process.pk}", link=f"/tasks/oek/")
+    notify(process.author, f"Заявка #{process.pk} повторно отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
+</file>
+
+<file path="backend/apps/publications/urls.py">
+from django.urls import path
+from .views import (
+    dashboard,
+    process_list, process_create, process_detail,
+    template_download,
+    upload_coauthor_consent,
+    library_tasks, library_decide,
+    reviewer_tasks, reviewer_submit_view,
+    oek_tasks, oek_decide_view,
+)
+
+app_name = "publications"
+
+urlpatterns = [
+    path("", dashboard, name="dashboard"),
+    path("processes/", process_list, name="process_list"),
+    path("process/create/", process_create, name="process_create"),
+    path("process/<int:pk>/", process_detail, name="process_detail"),
+
+    path("template/<int:pk>/download/", template_download, name="template_download"),
+
+    path("process/<int:process_pk>/coauthor/<int:coauthor_pk>/consent/", upload_coauthor_consent, name="upload_consent"),
+
+    path("tasks/library/", library_tasks, name="library_tasks"),
+    path("tasks/library/<int:pk>/decide/", library_decide, name="library_decide"),
+
+    path("tasks/reviewer/", reviewer_tasks, name="reviewer_tasks"),
+    path("tasks/reviewer/<int:assignment_pk>/submit/", reviewer_submit_view, name="reviewer_submit"),
+
+    path("tasks/oek/", oek_tasks, name="oek_tasks"),
+    path("tasks/oek/<int:pk>/decide/", oek_decide_view, name="oek_decide"),
+]
+</file>
+
+<file path="backend/apps/publications/views.py">
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import FileResponse, Http404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+
+from apps.accounts.models import User
+from apps.accounts.permissions import role_required
+from apps.notifications.utils import notify
+
+from .forms import (
+    ProcessCreateForm, DocumentsForm, CoAuthorFormSet,
+    UploadConsentForm, LibraryDecisionForm, ReviewerVerdictForm, OEKDecisionForm
+)
+from .models import Process, PublicationTemplate, CoAuthor, ReviewerAssignment
+from .services import (
+    start_or_advance_after_creation,
+    try_advance_after_coauthor_consents,
+    library_apply_decision,
+    reviewer_submit,
+    author_resubmit_after_internal_fix,
+    oek_apply_decision,
+    author_resubmit_after_oek_fix,
+)
+
+
+@login_required
+def dashboard(request):
+    """
+    Единая точка входа:
+    - AUTHOR видит свои процессы
+    - LIBRARY_HEAD видит задачи библиотеки
+    - REVIEWER видит задачи рецензирования
+    - OEK видит задачи ОЭК
+    - COMMISSION видит процессы READY_FOR_DEFENSE
+    """
+    user = request.user
+
+    context = {"role": user.role}
+
+    if user.role == User.Role.AUTHOR:
+        context["processes"] = Process.objects.filter(author=user).order_by("-created_at")
+        return render(request, "publications/dashboard.html", context)
+
+    if user.role == User.Role.LIBRARY_HEAD:
+        context["processes"] = Process.objects.filter(status=Process.Status.LIBRARY_REVIEW).order_by("created_at")
+        return render(request, "publications/dashboard.html", context)
+
+    if user.role == User.Role.REVIEWER:
+        context["assignments"] = ReviewerAssignment.objects.filter(reviewer=user).order_by("-process__created_at")
+        return render(request, "publications/dashboard.html", context)
+
+    if user.role == User.Role.OEK:
+        context["processes"] = Process.objects.filter(status=Process.Status.OEK_REVIEW).order_by("created_at")
+        return render(request, "publications/dashboard.html", context)
+
+    if user.role == User.Role.COMMISSION:
+        context["processes"] = Process.objects.filter(status=Process.Status.READY_FOR_DEFENSE).order_by("-updated_at")
+        return render(request, "publications/dashboard.html", context)
+
+    # fallback for superuser/others
+    context["processes"] = Process.objects.all().order_by("-created_at")[:50]
+    return render(request, "publications/dashboard.html", context)
+
+
+@login_required
+def process_list(request):
+    if request.user.role == User.Role.AUTHOR:
+        qs = Process.objects.filter(author=request.user).order_by("-created_at")
+    else:
+        qs = Process.objects.all().order_by("-created_at")
+    return render(request, "publications/process_list.html", {"processes": qs})
+
+
+@login_required
+def process_create(request):
+    if request.user.role != User.Role.AUTHOR and not request.user.is_superuser:
+        return redirect("publications:dashboard")
+
+    if request.method == "POST":
+        p_form = ProcessCreateForm(request.POST)
+        d_form = DocumentsForm(request.POST, request.FILES)
+        formset = CoAuthorFormSet(request.POST, queryset=CoAuthor.objects.none())
+
+        if p_form.is_valid() and d_form.is_valid() and formset.is_valid():
+            process = p_form.save(commit=False)
+            process.author = request.user
+            process.save()
+
+            # docs
+            docs = d_form.save(commit=False)
+            docs.process = process
+            docs.save()
+
+            # coauthors
+            for f in formset:
+                if f.cleaned_data and not f.cleaned_data.get("DELETE", False):
+                    obj = f.save(commit=False)
+                    obj.process = process
+                    obj.save()
+
+            start_or_advance_after_creation(process)
+            messages.success(request, f"Заявка создана: #{process.pk}")
+            return redirect("publications:process_detail", pk=process.pk)
+    else:
+        p_form = ProcessCreateForm()
+        d_form = DocumentsForm()
+        formset = CoAuthorFormSet(queryset=CoAuthor.objects.none())
+
+    templates = PublicationTemplate.objects.filter(department=request.user.department).order_by("name")
+
+    return render(
+        request,
+        "publications/process_create.html",
+        {"p_form": p_form, "d_form": d_form, "formset": formset, "templates": templates},
+    )
+
+
+@login_required
+def process_detail(request, pk: int):
+    process = get_object_or_404(Process, pk=pk)
+
+    # access control:
+    if request.user.role == User.Role.AUTHOR and process.author != request.user and not request.user.is_superuser:
+        raise Http404()
+
+    # Actions by author: resubmit after fixes
+    if request.method == "POST" and request.user.role == User.Role.AUTHOR:
+        action = request.POST.get("action")
+
+        if action == "resubmit_internal":
+            author_resubmit_after_internal_fix(process)
+            messages.success(request, "Отправлено на повторное рецензирование.")
+            return redirect("publications:process_detail", pk=process.pk)
+
+        if action == "resubmit_oek":
+            author_resubmit_after_oek_fix(process)
+            messages.success(request, "Повторно отправлено в ОЭК.")
+            return redirect("publications:process_detail", pk=process.pk)
+
+    return render(request, "publications/process_detail.html", {"process": process})
+
+
+@login_required
+def template_download(request, pk: int):
+    tpl = get_object_or_404(PublicationTemplate, pk=pk)
+    if not tpl.file:
+        raise Http404()
+
+    return FileResponse(tpl.file.open("rb"), as_attachment=True, filename=tpl.file.name.split("/")[-1])
+
+
+@login_required
+def upload_coauthor_consent(request, process_pk: int, coauthor_pk: int):
+    process = get_object_or_404(Process, pk=process_pk, author=request.user)
+    coauthor = get_object_or_404(CoAuthor, pk=coauthor_pk, process=process)
+
+    if process.status != Process.Status.WAITING_COAUTHOR_CONSENTS:
+        messages.warning(request, "Сейчас этап согласий соавторов не активен для этой заявки.")
+        return redirect("publications:process_detail", pk=process.pk)
+
+    if request.method == "POST":
+        form = UploadConsentForm(request.POST, request.FILES, instance=coauthor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Согласие загружено.")
+            try_advance_after_coauthor_consents(process)
+            return redirect("publications:process_detail", pk=process.pk)
+    else:
+        form = UploadConsentForm(instance=coauthor)
+
+    return render(request, "publications/upload_consent.html", {"process": process, "coauthor": coauthor, "form": form})
+
+
+@role_required(User.Role.LIBRARY_HEAD)
+def library_tasks(request):
+    processes = Process.objects.filter(status=Process.Status.LIBRARY_REVIEW).order_by("created_at")
+    return render(request, "publications/library_tasks.html", {"processes": processes})
+
+
+@role_required(User.Role.LIBRARY_HEAD)
+def library_decide(request, pk: int):
+    process = get_object_or_404(Process, pk=pk)
+
+    if process.status != Process.Status.LIBRARY_REVIEW:
+        messages.warning(request, "Эта заявка сейчас не на этапе библиотеки.")
+        return redirect("publications:library_tasks")
+
+    ld = getattr(process, "library_decision", None)
+    if request.method == "POST":
+        form = LibraryDecisionForm(request.POST, instance=ld)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            # interpret decision
+            approved = obj.decision == obj.Decision.APPROVED
+            rejected = obj.decision == obj.Decision.REJECTED
+
+            if not (approved or rejected):
+                messages.warning(request, "Выберите 'Согласовано' или 'Отклонено'.")
+                return redirect("publications:library_decide", pk=process.pk)
+
+            library_apply_decision(process, approved=approved, comment=obj.comment, librarian=request.user)
+            messages.success(request, "Решение сохранено.")
+            return redirect("publications:library_tasks")
+    else:
+        form = LibraryDecisionForm(instance=ld)
+
+    return render(request, "publications/process_detail.html", {"process": process, "library_form": form})
+
+
+@role_required(User.Role.REVIEWER)
+def reviewer_tasks(request):
+    assignments = ReviewerAssignment.objects.filter(reviewer=request.user).order_by("-process__created_at")
+    return render(request, "publications/reviewer_tasks.html", {"assignments": assignments})
+
+
+@role_required(User.Role.REVIEWER)
+def reviewer_submit_view(request, assignment_pk: int):
+    assignment = get_object_or_404(ReviewerAssignment, pk=assignment_pk, reviewer=request.user)
+    process = assignment.process
+
+    if process.status != Process.Status.INTERNAL_REVIEW:
+        messages.warning(request, "Эта заявка сейчас не на этапе активного рецензирования.")
+        return redirect("publications:reviewer_tasks")
+
+    if request.method == "POST":
+        form = ReviewerVerdictForm(request.POST, instance=assignment)
+        if form.is_valid():
+            a = form.save(commit=False)
+            if a.verdict == a.Verdict.PENDING:
+                messages.warning(request, "Выберите итоговый вердикт.")
+                return redirect("publications:reviewer_submit", assignment_pk=assignment.pk)
+            reviewer_submit(assignment, verdict=a.verdict, comment=a.comment)
+            messages.success(request, "Рецензия отправлена.")
+            return redirect("publications:reviewer_tasks")
+    else:
+        form = ReviewerVerdictForm(instance=assignment)
+
+    return render(request, "publications/process_detail.html", {"process": process, "reviewer_form": form, "assignment": assignment})
+
+
+@role_required(User.Role.OEK)
+def oek_tasks(request):
+    processes = Process.objects.filter(status=Process.Status.OEK_REVIEW).order_by("created_at")
+    return render(request, "publications/oek_tasks.html", {"processes": processes})
+
+
+@role_required(User.Role.OEK)
+def oek_decide_view(request, pk: int):
+    process = get_object_or_404(Process, pk=pk)
+
+    if process.status != Process.Status.OEK_REVIEW:
+        messages.warning(request, "Эта заявка сейчас не на этапе ОЭК.")
+        return redirect("publications:oek_tasks")
+
+    od = getattr(process, "oek_decision", None)
+
+    if request.method == "POST":
+        form = OEKDecisionForm(request.POST, instance=od)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            approved = obj.decision == obj.Decision.APPROVED
+            rejected = obj.decision == obj.Decision.REJECTED
+            if not (approved or rejected):
+                messages.warning(request, "Выберите 'Согласовано' или 'Отклонено'.")
+                return redirect("publications:oek_decide", pk=process.pk)
+
+            defense_datetime = form.cleaned_data.get("defense_datetime")
+            defense_room = form.cleaned_data.get("defense_room", "")
+
+            oek_apply_decision(
+                process,
+                approved=approved,
+                comment=obj.comment,
+                oek_user=request.user,
+                defense_datetime=defense_datetime,
+                defense_room=defense_room,
+            )
+            messages.success(request, "Решение ОЭК сохранено.")
+            return redirect("publications:oek_tasks")
+    else:
+        form = OEKDecisionForm(instance=od, initial={
+            "defense_room": process.defense_room,
+        })
+
+    return render(request, "publications/process_detail.html", {"process": process, "oek_form": form})
+</file>
+
+<file path="backend/config/__init__.py">
+
+</file>
+
+<file path="backend/config/asgi.py">
+import os
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+application = get_asgi_application()
+</file>
+
+<file path="backend/config/settings.py">
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+
+INSTALLED_APPS = [
+    # django
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    # local apps
+    "apps.accounts",
+    "apps.publications",
+    "apps.notifications",
+]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+ROOT_URLCONF = "config.urls"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],  # global templates dir
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+
+                # notifications badge/unread count
+                "apps.notifications.context_processors.notifications_context",
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "oek_db"),
+        "USER": os.getenv("POSTGRES_USER", "oek_user"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "oek_pass"),
+        "HOST": os.getenv("POSTGRES_HOST", "db"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+LANGUAGE_CODE = "ru-ru"
+TIME_ZONE = "Europe/Moscow"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "publications:dashboard"
+LOGOUT_REDIRECT_URL = "accounts:login"
+
+AUTH_USER_MODEL = "accounts.User"
+
+# Whitenoise static files compression (optional)
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+</file>
+
+<file path="backend/config/urls.py">
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+
+    path("", include("apps.publications.urls")),
+    path("accounts/", include("apps.accounts.urls")),
+    path("notifications/", include("apps.notifications.urls")),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+</file>
+
+<file path="backend/config/wsgi.py">
+import os
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+application = get_wsgi_application()
+</file>
+
+<file path="backend/manage.py">
+import os
+import sys
+
+
+def main():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError("Couldn't import Django.") from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="backend/static/css/styles.css">
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f6f7fb;
+  color: #111;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: #111827;
+  color: #fff;
+}
+.nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 12px;
+}
+.nav__brand { font-weight: 700; margin-left: 0; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ef4444;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.card {
+  background: #fff;
+  padding: 14px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  margin: 12px 0;
+}
+
+.subcard {
+  background: #fafafa;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px dashed #d1d5db;
+  margin: 10px 0;
+}
+
+.list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.list li {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eee;
+}
+.list li.unread {
+  background: #fff7ed;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 12px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn--secondary {
+  background: #6b7280;
+}
+
+.actions { margin: 12px 0; }
+
+.muted { color: #6b7280; }
+
+.messages { margin: 10px 0; }
+.message {
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin: 8px 0;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+.message--success { border-color: #86efac; background: #f0fdf4; }
+.message--warning { border-color: #fdba74; background: #fff7ed; }
+.message--error { border-color: #fca5a5; background: #fef2f2; }
+
+input[type="text"], input[type="email"], input[type="password"], input[type="datetime-local"], select, textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+textarea { min-height: 90px; }
+label { font-weight: 600; }
+</file>
+
+<file path="backend/templates/accounts/login.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Вход</h1>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Войти</button>
+</form>
+
+<p class="muted">
+  Нет аккаунта? <a href="{% url 'accounts:register' %}">Регистрация</a>
+</p>
+{% endblock %}
+</file>
+
+<file path="backend/templates/accounts/profile.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Профиль</h1>
+
+<div class="card">
+  <p><b>Логин:</b> {{ user.username }}</p>
+  <p><b>Роль:</b> {{ user.get_role_display }}</p>
+</div>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Сохранить</button>
+</form>
+{% endblock %}
+</file>
+
+<file path="backend/templates/accounts/register.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Регистрация</h1>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Создать аккаунт</button>
+</form>
+
+<p class="muted">
+  Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a>
+</p>
+{% endblock %}
+</file>
+
+<file path="backend/templates/base.html">
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Система экспертного контроля публикаций</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  {% include "partials/nav.html" %}
+  <main class="container">
+    {% include "partials/messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
+</file>
+
+<file path="backend/templates/notifications/list.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Уведомления</h1>
+
+<div class="actions">
+  <a class="btn btn--secondary" href="{% url 'notifications:read_all' %}">Отметить все как прочитанные</a>
+</div>
+
+{% if notifications %}
+  <ul class="list">
+    {% for n in notifications %}
+      <li class="{% if not n.is_read %}unread{% endif %}">
+        <div>
+          <b>{{ n.created_at }}</b> — {{ n.message }}
+          | <a href="{% url 'notifications:detail' n.pk %}">открыть</a>
+          | <a href="{% url 'notifications:read' n.pk %}">отметить прочитанным</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Уведомлений нет.</p>
+{% endif %}
+{% endblock %}
+</file>
+
+<file path="backend/templates/partials/messages.html">
+{% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="message message--{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+</file>
+
+<file path="backend/templates/partials/nav.html">
+<nav class="nav">
+  <div class="nav__left">
+    <a href="{% url 'publications:dashboard' %}" class="nav__brand">ОЭК Публикации</a>
+  </div>
+
+  <div class="nav__right">
+    {% if user.is_authenticated %}
+      <a href="{% url 'publications:process_list' %}">Процессы</a>
+      <a href="{% url 'notifications:list' %}">Уведомления {% if unread_notifications_count %}<span class="badge">{{ unread_notifications_count }}</span>{% endif %}</a>
+      <a href="{% url 'accounts:profile' %}">Профиль</a>
+      <a href="{% url 'accounts:logout' %}">Выход</a>
+    {% else %}
+      <a href="{% url 'accounts:login' %}">Вход</a>
+      <a href="{% url 'accounts:register' %}">Регистрация</a>
+    {% endif %}
+  </div>
+</nav>
+</file>
+
+<file path="backend/templates/publications/dashboard.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Личный кабинет</h1>
+
+<div class="card">
+  <p><b>Пользователь:</b> {{ user.display_name }}</p>
+  <p><b>Роль:</b> {{ user.get_role_display }}</p>
+</div>
+
+{% if user.role == "AUTHOR" %}
+  <div class="actions">
+    <a class="btn" href="{% url 'publications:process_create' %}">Создать новую заявку</a>
+  </div>
+
+  <h2>Мои заявки</h2>
+  {% include "publications/process_list.html" with processes=processes only %}
+
+{% elif user.role == "LIBRARY_HEAD" %}
+  <h2>Задачи библиотеки</h2>
+  <p class="muted">Проверка списка литературы.</p>
+  <a class="btn" href="{% url 'publications:library_tasks' %}">Открыть задачи</a>
+
+{% elif user.role == "REVIEWER" %}
+  <h2>Мои рецензии</h2>
+  <a class="btn" href="{% url 'publications:reviewer_tasks' %}">Открыть задания рецензента</a>
+
+{% elif user.role == "OEK" %}
+  <h2>Задачи ОЭК</h2>
+  <a class="btn" href="{% url 'publications:oek_tasks' %}">Открыть задачи ОЭК</a>
+
+{% elif user.role == "COMMISSION" %}
+  <h2>Готово к защите</h2>
+  {% if processes %}
+    <ul class="list">
+      {% for p in processes %}
+        <li>
+          <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+          <div class="muted">Защита: {{ p.defense_datetime|default:"не назначена" }} {{ p.defense_room }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Пока нет заявок, готовых к защите.</p>
+  {% endif %}
+{% else %}
+  <p class="muted">Нет специализированного дашборда для этой роли.</p>
+{% endif %}
+{% endblock %}
+</file>
+
+<file path="backend/templates/publications/library_tasks.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Задачи библиотеки</h1>
+
+{% if processes %}
+  <ul class="list">
+    {% for p in processes %}
+      <li>
+        <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+        <div class="muted">
+          Автор: {{ p.author.display_name }} |
+          <a href="{% url 'publications:library_decide' p.pk %}">Принять решение</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет задач.</p>
+{% endif %}
+{% endblock %}
+</file>
+
+<file path="backend/templates/publications/oek_tasks.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Задачи ОЭК</h1>
+
+{% if processes %}
+  <ul class="list">
+    {% for p in processes %}
+      <li>
+        <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+        <div class="muted">
+          Автор: {{ p.author.display_name }} |
+          <a href="{% url 'publications:oek_decide' p.pk %}">Принять решение</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет задач.</p>
+{% endif %}
+{% endblock %}
+</file>
+
+<file path="backend/templates/publications/process_create.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Новая заявка</h1>
+
+<div class="card">
+  <h3>Шаблоны оформления</h3>
+  {% if templates %}
+    <ul class="list">
+      {% for t in templates %}
+        <li>
+          {{ t.name }} —
+          <a href="{% url 'publications:template_download' t.pk %}">Скачать</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">
+      Для вашей кафедры шаблонов пока нет. Админ может загрузить их в admin → PublicationTemplate.
+    </p>
+  {% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+
+  <h3>Параметры заявки</h3>
+  {{ p_form.as_p }}
+
+  <h3>Файлы</h3>
+  {{ d_form.as_p }}
+
+  <h3>Соавторы</h3>
+  {{ formset.management_form }}
+  <div id="coauthors">
+    {% for form in formset %}
+      <div class="subcard coauthor-row">
+        {{ form.as_p }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <p class="muted">
+    Чтобы добавить соавтора — заполните дополнительные строки (extra=1),
+    либо нажмите “Добавить строку”.
+  </p>
+
+  <button type="button" class="btn btn--secondary" onclick="addCoauthorRow()">Добавить строку</button>
+  <button class="btn" type="submit">Создать заявку</button>
+</form>
+
+<script>
+function addCoauthorRow() {
+  const container = document.getElementById('coauthors');
+  const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+  const idx = parseInt(totalForms.value, 10);
+
+  const empty = `
+    <div class="subcard coauthor-row">
+      <p>
+        <label for="id_form-${idx}-name">ФИО соавтора:</label>
+        <input type="text" name="form-${idx}-name" id="id_form-${idx}-name">
+      </p>
+      <p>
+        <label for="id_form-${idx}-email">Email соавтора:</label>
+        <input type="email" name="form-${idx}-email" id="id_form-${idx}-email">
+      </p>
+      <input type="hidden" name="form-${idx}-id" id="id_form-${idx}-id">
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', empty);
+  totalForms.value = idx + 1;
+}
+</script>
+{% endblock %}
+</file>
+
+<file path="backend/templates/publications/process_detail.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Заявка #{{ process.pk }}</h1>
+
+<div class="card">
+  <p><b>Название:</b> {{ process.title }}</p>
+  <p><b>Журнал:</b> {{ process.journal }}</p>
+  <p><b>Совет:</b> {{ process.council.council_number }} ({{ process.council.department }})</p>
+  <p><b>Члены совета:</b><br>{{ process.council.members|linebreaksbr }}</p>
+  <p><b>МИФИ:</b> {{ process.is_mifi|yesno:"Да,Нет" }}</p>
+  <p><b>Статус:</b> {{ process.get_status_display }}</p>
+
+  {% if process.status == "READY_FOR_DEFENSE" %}
+    <hr>
+    <p><b>Время защиты:</b> {{ process.defense_datetime|default:"не назначено" }}</p>
+    <p><b>Место защиты:</b> {{ process.defense_room|default:"—" }}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Файлы</h3>
+  {% if process.documents %}
+    <ul class="list">
+      <li>Статья: <a href="{{ process.documents.article_file.url }}">скачать</a></li>
+      <li>Литература: <a href="{{ process.documents.bibliography_file.url }}">скачать</a></li>
+      <li>Заполненный шаблон: <a href="{{ process.documents.filled_template_file.url }}">скачать</a></li>
+    </ul>
+  {% else %}
+    <p class="muted">Файлы не загружены.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Соавторы</h3>
+  {% if process.coauthors.all %}
+    <ul class="list">
+      {% for c in process.coauthors.all %}
+        <li>
+          {{ c.name }} ({{ c.email|default:"без email" }})
+          {% if c.consent_file %}
+            — согласие: <a href="{{ c.consent_file.url }}">скачать</a>
+          {% else %}
+            — согласие: <span class="muted">не загружено</span>
+            {% if user.role == "AUTHOR" and process.status == "WAITING_COAUTHOR_CONSENTS" %}
+              | <a href="{% url 'publications:upload_consent' process.pk c.pk %}">загрузить</a>
+            {% endif %}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Соавторов нет.</p>
+  {% endif %}
+</div>
+
+{% if library_form %}
+  <div class="card">
+    <h3>Решение библиотеки</h3>
+    <form method="post">
+      {% csrf_token %}
+      {{ library_form.as_p }}
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if reviewer_form %}
+  <div class="card">
+    <h3>Рецензия</h3>
+    <p class="muted">Рецензент: {{ assignment.reviewer.display_name }}</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ reviewer_form.as_p }}
+      <button class="btn" type="submit">Отправить рецензию</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if oek_form %}
+  <div class="card">
+    <h3>Решение ОЭК</h3>
+    <form method="post">
+      {% csrf_token %}
+      {{ oek_form.as_p }}
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if user.role == "AUTHOR" %}
+  {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
+    <form method="post" class="card">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="resubmit_internal">
+      <button class="btn" type="submit">Отправить на повторное рецензирование</button>
+      <p class="muted">Предполагается, что вы заменили файлы (в MVP — через admin; в расширении можно сделать форму перезагрузки).</p>
+    </form>
+  {% endif %}
+
+  {% if process.status == "OEK_NEEDS_FIX" %}
+    <form method="post" class="card">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="resubmit_oek">
+      <button class="btn" type="submit">Повторно отправить в ОЭК</button>
+      <p class="muted">Предполагается, что вы исправили пакет документов.</p>
+    </form>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
+</file>
+
+<file path="backend/templates/publications/process_list.html">
+{% if processes %}
+  <ul class="list">
+    {% for p in processes %}
+      <li>
+        <a href="{% url 'publications:process_detail' p.pk %}">Заявка #{{ p.pk }} — {{ p.title }}</a>
+        <div class="muted">
+          Статус: {{ p.get_status_display }} |
+          Журнал: {{ p.journal }} |
+          Совет: {{ p.council.council_number }}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет данных.</p>
+{% endif %}
+</file>
+
+<file path="backend/templates/publications/reviewer_tasks.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Задачи рецензента</h1>
+
+{% if assignments %}
+  <ul class="list">
+    {% for a in assignments %}
+      <li>
+        Заявка #{{ a.process.pk }} — <a href="{% url 'publications:process_detail' a.process.pk %}">{{ a.process.title }}</a>
+        <div class="muted">
+          Статус заявки: {{ a.process.get_status_display }} |
+          Ваш вердикт: {{ a.get_verdict_display }}
+          {% if a.process.status == "INTERNAL_REVIEW" and a.verdict == "PENDING" %}
+            | <a href="{% url 'publications:reviewer_submit' a.pk %}">Заполнить рецензию</a>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Нет назначенных рецензий.</p>
+{% endif %}
+{% endblock %}
+</file>
+
+<file path="backend/templates/publications/upload_consent.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Загрузка согласия соавтора</h1>
+
+<div class="card">
+  <p><b>Заявка:</b> #{{ process.pk }} — {{ process.title }}</p>
+  <p><b>Соавтор:</b> {{ coauthor.name }}</p>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Загрузить</button>
+</form>
+{% endblock %}
+</file>
+
+<file path="docker-compose.yml">
+services:
+  db:
+    image: postgres:16
+    container_name: oek_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oek_db}
+      POSTGRES_USER: ${POSTGRES_USER:-oek_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oek_pass}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build: .
+    container_name: oek_web
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  media_data:
+  static_data:
+</file>
+
+<file path="docker/entrypoint.sh">
+#!/bin/sh
+set -e
+
+cd /app
+
+echo "Applying migrations..."
+python manage.py migrate --noinput
+
+echo "Collecting static..."
+python manage.py collectstatic --noinput
+
+echo "Seeding demo data (idempotent)..."
+python manage.py seed_demo || true
+
+echo "Starting gunicorn..."
+gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+</file>
+
+<file path="Dockerfile">
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# system deps (optional but useful)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+COPY backend/ /app/
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.sh"]
+</file>
+
+<file path="requirements.txt">
+Django==4.2.11
+gunicorn==21.2.0
+psycopg2-binary==2.9.9
+whitenoise==6.6.0
+python-dotenv==1.0.1
+</file>
+
+</files>

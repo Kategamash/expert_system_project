@@ -17,11 +17,7 @@ def start_or_advance_after_creation(process: Process):
     if process.coauthors.exists():
         process.status = Process.Status.WAITING_COAUTHOR_CONSENTS
         process.save(update_fields=["status"])
-        notify(
-            process.author,
-            f"Заявка #{process.pk}: загрузите согласия соавторов.",
-            link=f"/process/{process.pk}/",
-        )
+        notify(process.author, f"Заявка #{process.pk}: загрузите согласия соавторов.", link=f"/process/{process.pk}/", process=process)
     else:
         send_to_library(process)
 
@@ -48,7 +44,7 @@ def send_to_library(process: Process):
     librarian = User.objects.filter(role=User.Role.LIBRARY_HEAD).order_by("id").first()
     if librarian:
         notify(librarian, f"Новая задача: проверить литературу по заявке #{process.pk}", link=f"/tasks/library/")
-    notify(process.author, f"Заявка #{process.pk} отправлена в библиотеку на проверку.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Заявка #{process.pk} отправлена в библиотеку на проверку.", link=f"/process/{process.pk}/", process=process)
 
 
 def library_apply_decision(process: Process, approved: bool, comment: str, librarian: User):
@@ -66,17 +62,13 @@ def library_apply_decision(process: Process, approved: bool, comment: str, libra
         else:
             send_to_oek(process)
 
-        notify(process.author, f"Библиотека согласовала заявку #{process.pk}.", link=f"/process/{process.pk}/")
+        notify(process.author, f"Библиотека согласовала заявку #{process.pk}.", link=f"/process/{process.pk}/", process=process)
     else:
         ld.decision = LibraryDecision.Decision.REJECTED
         ld.save()
         process.status = Process.Status.LIBRARY_NEEDS_FIX
         process.save(update_fields=["status"])
-        notify(
-            process.author,
-            f"Библиотека отклонила заявку #{process.pk}. Комментарий: {comment}",
-            link=f"/process/{process.pk}/",
-        )
+        notify(process.author, f"Библиотека отклонила заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
 
 
 def reset_reviewers(process: Process):
@@ -106,7 +98,7 @@ def assign_reviewers(process: Process):
     for r in chosen:
         notify(r, f"Новая рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
 
-    notify(process.author, f"Заявка #{process.pk} отправлена на внутреннее рецензирование.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Заявка #{process.pk} отправлена на внутреннее рецензирование.", link=f"/process/{process.pk}/", process=process)
 
 
 def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
@@ -116,7 +108,7 @@ def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
     assignment.save()
 
     process = assignment.process
-    notify(process.author, f"Получена рецензия по заявке #{process.pk} от {assignment.reviewer.display_name()}.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Получена рецензия по заявке #{process.pk} от {assignment.reviewer.display_name()}.", link=f"/process/{process.pk}/", process=process)
 
     # If all decided -> finalize stage
     if process.review_assignments.filter(verdict=ReviewerAssignment.Verdict.PENDING).exists():
@@ -131,14 +123,14 @@ def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
     if not_rec >= 2:
         process.status = Process.Status.REJECTED
         process.save(update_fields=["status"])
-        notify(process.author, f"Заявка #{process.pk} отклонена по результатам рецензирования (>=2 'Не рекомендовать').", link=f"/process/{process.pk}/")
+        notify(process.author, f"Заявка #{process.pk} отклонена по результатам рецензирования (>=2 'Не рекомендовать').", link=f"/process/{process.pk}/", process=process)
         return
 
     # if any AFTER_FIX -> needs fix
     if after_fix >= 1:
         process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
         process.save(update_fields=["status"])
-        notify(process.author, f"Заявка #{process.pk}: требуется исправление по рецензиям и повторная отправка.", link=f"/process/{process.pk}/")
+        notify(process.author, f"Заявка #{process.pk}: требуется исправление по рецензиям и повторная отправка.", link=f"/process/{process.pk}/", process=process)
         return
 
     # else if 2 recommend -> go next
@@ -149,7 +141,7 @@ def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
     # fallback
     process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
     process.save(update_fields=["status"])
-    notify(process.author, f"Заявка #{process.pk}: требуется уточнение/исправление по рецензиям.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Заявка #{process.pk}: требуется уточнение/исправление по рецензиям.", link=f"/process/{process.pk}/", process=process)
 
 
 def author_resubmit_after_internal_fix(process: Process):
@@ -163,7 +155,7 @@ def author_resubmit_after_internal_fix(process: Process):
     process.save(update_fields=["status"])
     for a in process.review_assignments.all():
         notify(a.reviewer, f"Повторная рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
-    notify(process.author, f"Заявка #{process.pk} отправлена на повторное рецензирование.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Заявка #{process.pk} отправлена на повторное рецензирование.", link=f"/process/{process.pk}/", process=process)
 
 
 def send_to_oek(process: Process):
@@ -175,7 +167,7 @@ def send_to_oek(process: Process):
     oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
     if oek_user:
         notify(oek_user, f"Новая задача ОЭК: проверить заявку #{process.pk}", link=f"/tasks/oek/")
-    notify(process.author, f"Заявка #{process.pk} отправлена в ОЭК.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Заявка #{process.pk} отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
 
 
 def oek_apply_decision(process: Process, approved: bool, comment: str, oek_user: User, defense_datetime=None, defense_room=""):
@@ -195,7 +187,7 @@ def oek_apply_decision(process: Process, approved: bool, comment: str, oek_user:
             process.defense_room = defense_room
         process.save(update_fields=["status", "defense_datetime", "defense_room"])
 
-        notify(process.author, f"ОЭК согласовал заявку #{process.pk}. Статус: готово к защите.", link=f"/process/{process.pk}/")
+        notify(process.author, f"ОЭК согласовал заявку #{process.pk}. Статус: готово к защите.", link=f"/process/{process.pk}/", process=process)
 
         # notify commission members
         commission_users = User.objects.filter(role=User.Role.COMMISSION)
@@ -206,7 +198,7 @@ def oek_apply_decision(process: Process, approved: bool, comment: str, oek_user:
         od.save()
         process.status = Process.Status.OEK_NEEDS_FIX
         process.save(update_fields=["status"])
-        notify(process.author, f"ОЭК отклонил заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/")
+        notify(process.author, f"ОЭК отклонил заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
 
 
 def author_resubmit_after_oek_fix(process: Process):
@@ -217,4 +209,4 @@ def author_resubmit_after_oek_fix(process: Process):
     oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
     if oek_user:
         notify(oek_user, f"Повторная проверка ОЭК: заявка #{process.pk}", link=f"/tasks/oek/")
-    notify(process.author, f"Заявка #{process.pk} повторно отправлена в ОЭК.", link=f"/process/{process.pk}/")
+    notify(process.author, f"Заявка #{process.pk} повторно отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)

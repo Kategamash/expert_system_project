@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Уведомление</h1>
+
+<div class="card">
+  <p><b>Дата:</b> {{ notification.created_at }}</p>
+  <p><b>Текст:</b> {{ notification.message }}</p>
+
+  {% if notification.link %}
+    <p><a class="btn btn--secondary" href="{{ notification.link }}">Перейти по ссылке</a></p>
+  {% endif %}
+
+  {% if process %}
+    <p><a class="btn" href="{% url 'publications:process_detail' process.pk %}">Открыть заявку</a></p>
+  {% endif %}
+</div>
+
+{% if library_comment %}
+  <div class="card">
+    <h3>Комментарий главы библиотеки</h3>
+    <p><b>Решение:</b> {{ library_comment.decision }}</p>
+    {% if library_comment.decided_at %}<p class="muted">{{ library_comment.decided_at }}</p>{% endif %}
+    <pre style="white-space: pre-wrap;">{{ library_comment.comment }}</pre>
+  </div>
+{% endif %}
+
+{% if reviewer_comments %}
+  <div class="card">
+    <h3>Комментарии рецензеров</h3>
+    {% for rc in reviewer_comments %}
+      <div class="subcard">
+        <p><b>Рецензер:</b> {{ rc.reviewer }}</p>
+        <p><b>Вердикт:</b> {{ rc.verdict }}</p>
+        {% if rc.decided_at %}<p class="muted">{{ rc.decided_at }}</p>{% endif %}
+        <pre style="white-space: pre-wrap;">{{ rc.comment }}</pre>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if process and user.role == "AUTHOR" %}
+  {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
+    <div class="card">
+      <h3>Действие</h3>
+      <a class="btn" href="{% url 'publications:reviewer_rework' process.pk %}">
+        Загрузить исправления и отправить на повторное рецензирование
+      </a>
+    </div>
+  {% endif %}
+
+  {% if process.status == "LIBRARY_NEEDS_FIX" %}
+    <div class="card">
+      <h3>Действие</h3>
+      <a class="btn" href="{% url 'publications:bibliography_rework' process.pk %}">
+        Загрузить исправленный список литературы и отправить на повторную проверку
+      </a>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

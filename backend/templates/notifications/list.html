@@ -12,11 +12,8 @@
       <li class="{% if not n.is_read %}unread{% endif %}">
         <div>
           <b>{{ n.created_at }}</b> — {{ n.message }}
-          {% if n.link %}
-            | <a href="{% url 'notifications:read' n.pk %}">перейти</a>
-          {% else %}
-            | <a href="{% url 'notifications:read' n.pk %}">отметить прочитанным</a>
-          {% endif %}
+          | <a href="{% url 'notifications:detail' n.pk %}">открыть</a>
+          | <a href="{% url 'notifications:read' n.pk %}">отметить прочитанным</a>
         </div>
       </li>
     {% endfor %}
