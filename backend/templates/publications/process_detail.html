@@ -53,6 +53,28 @@
   {% endif %}
 </div>
 
+{% if user.role == "AUTHOR" and process.library_decision and process.library_decision.comment %}
+  <div class="card">
+    <h3>Комментарий библиотеки</h3>
+    <p><b>Решение:</b> {{ process.library_decision.get_decision_display }}</p>
+    <pre style="white-space: pre-wrap;">{{ process.library_decision.comment }}</pre>
+  </div>
+{% endif %}
+
+{% if user.role == "AUTHOR" and process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
+  <div class="card">
+    <h3>Комментарии рецензеров</h3>
+    {% for a in process.review_assignments.all %}
+      {% if a.comment %}
+        <div class="subcard">
+          <p><b>{{ a.reviewer.display_name }}</b> — {{ a.get_verdict_display }}</p>
+          <pre style="white-space: pre-wrap;">{{ a.comment }}</pre>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
 {% if library_form %}
   <div class="card">
     <h3>Решение библиотеки</h3>
@@ -89,12 +111,19 @@
 
 {% if user.role == "AUTHOR" %}
   {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
-    <form method="post" class="card">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="resubmit_internal">
-      <button class="btn" type="submit">Отправить на повторное рецензирование</button>
-      <p class="muted">Предполагается, что вы заменили файлы (в MVP — через admin; в расширении можно сделать форму перезагрузки).</p>
-    </form>
+    <div class="card">
+      <a class="btn" href="{% url 'publications:reviewer_rework' process.pk %}">
+        Загрузить исправления и отправить на повторное рецензирование
+      </a>
+    </div>
+  {% endif %}
+
+  {% if process.status == "LIBRARY_NEEDS_FIX" %}
+    <div class="card">
+      <a class="btn" href="{% url 'publications:bibliography_rework' process.pk %}">
+        Загрузить исправленный список литературы и отправить на повторную проверку
+      </a>
+    </div>
   {% endif %}
 
   {% if process.status == "OEK_NEEDS_FIX" %}

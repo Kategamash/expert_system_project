@@ -210,3 +210,30 @@ def author_resubmit_after_oek_fix(process: Process):
     if oek_user:
         notify(oek_user, f"Повторная проверка ОЭК: заявка #{process.pk}", link=f"/tasks/oek/")
     notify(process.author, f"Заявка #{process.pk} повторно отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
+
+def author_resubmit_after_library_fix(process: Process):
+    """
+    Автор загрузил исправленный список литературы и отправляет снова в библиотеку.
+    """
+    if process.status != Process.Status.LIBRARY_NEEDS_FIX:
+        return
+
+    # сбрасываем решение библиотеки в ожидание
+    ld, _ = LibraryDecision.objects.get_or_create(process=process)
+    ld.decision = LibraryDecision.Decision.PENDING
+    ld.decided_at = None
+    ld.save(update_fields=["decision", "decided_at"])
+
+    process.status = Process.Status.LIBRARY_REVIEW
+    process.save(update_fields=["status"])
+
+    librarian = User.objects.filter(role=User.Role.LIBRARY_HEAD).order_by("id").first()
+    if librarian:
+        notify(librarian, f"Повторная проверка: литература по заявке #{process.pk}", link=f"/tasks/library/")
+
+    notify(
+        process.author,
+        f"Заявка #{process.pk} повторно отправлена в библиотеку на проверку.",
+        link=f"/process/{process.pk}/",
+        process=process,
+    )

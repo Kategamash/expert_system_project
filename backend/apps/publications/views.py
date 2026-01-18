@@ -10,9 +10,10 @@ from apps.notifications.utils import notify
 
 from .forms import (
     ProcessCreateForm, DocumentsForm, CoAuthorFormSet,
-    UploadConsentForm, LibraryDecisionForm, ReviewerVerdictForm, OEKDecisionForm
+    UploadConsentForm, LibraryDecisionForm, ReviewerVerdictForm, OEKDecisionForm,
+    ReviewerReworkUploadForm, BibliographyReworkUploadForm,
 )
-from .models import Process, PublicationTemplate, CoAuthor, ReviewerAssignment
+from .models import Process, PublicationTemplate, CoAuthor, ReviewerAssignment, ProcessDocuments
 from .services import (
     start_or_advance_after_creation,
     try_advance_after_coauthor_consents,
@@ -21,6 +22,7 @@ from .services import (
     author_resubmit_after_internal_fix,
     oek_apply_decision,
     author_resubmit_after_oek_fix,
+    author_resubmit_after_library_fix,
 )
 
 
@@ -284,3 +286,49 @@ def oek_decide_view(request, pk: int):
         })
 
     return render(request, "publications/process_detail.html", {"process": process, "oek_form": form})
+
+@login_required
+def reviewer_rework_view(request, pk: int):
+    process = get_object_or_404(Process, pk=pk, author=request.user)
+
+    if process.status != Process.Status.INTERNAL_REVIEW_NEEDS_FIX:
+        messages.warning(request, "Эта заявка сейчас не на этапе доработки по рецензиям.")
+        return redirect("publications:process_detail", pk=process.pk)
+
+    docs = process.documents
+
+    if request.method == "POST":
+        form = ReviewerReworkUploadForm(request.POST, request.FILES, instance=docs)
+        if form.is_valid():
+            form.save()
+            author_resubmit_after_internal_fix(process)
+            messages.success(request, "Файлы обновлены и заявка отправлена на повторное рецензирование.")
+            return redirect("publications:process_detail", pk=process.pk)
+    else:
+        form = ReviewerReworkUploadForm(instance=docs)
+
+    return render(request, "publications/reviewer_rework.html", {"process": process, "form": form})
+
+
+@login_required
+def bibliography_rework_view(request, pk: int):
+    process = get_object_or_404(Process, pk=pk, author=request.user)
+
+    if process.status != Process.Status.LIBRARY_NEEDS_FIX:
+        messages.warning(request, "Эта заявка сейчас не на этапе доработки по библиотеке.")
+        return redirect("publications:process_detail", pk=process.pk)
+
+    docs = process.documents
+
+    if request.method == "POST":
+        form = BibliographyReworkUploadForm(request.POST, request.FILES, instance=docs)
+        if form.is_valid():
+            form.save()
+            # вызовем сервис, который вернёт в LIBRARY_REVIEW и создаст задачу библиотеке
+            author_resubmit_after_library_fix(process)
+            messages.success(request, "Список литературы обновлён и отправлен на повторную проверку библиотеки.")
+            return redirect("publications:process_detail", pk=process.pk)
+    else:
+        form = BibliographyReworkUploadForm(instance=docs)
+
+    return render(request, "publications/bibliography_rework.html", {"process": process, "form": form})

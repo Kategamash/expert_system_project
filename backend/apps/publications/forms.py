@@ -74,3 +74,30 @@ class OEKDecisionForm(forms.ModelForm):
         model = OEKDecision
         fields = ("decision", "comment")
         labels = {"decision": "Решение", "comment": "Комментарий"}
+
+class ReviewerReworkUploadForm(forms.ModelForm):
+    class Meta:
+        model = ProcessDocuments
+        fields = ("article_file", "filled_template_file")
+        labels = {
+            "article_file": "Исправленный файл статьи/тезисов (если нужно)",
+            "filled_template_file": "Исправленный заполненный шаблон (если нужно)",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["article_file"].required = False
+        self.fields["filled_template_file"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("article_file") and not cleaned.get("filled_template_file"):
+            raise forms.ValidationError("Загрузите хотя бы один исправленный файл.")
+        return cleaned
+
+
+class BibliographyReworkUploadForm(forms.ModelForm):
+    class Meta:
+        model = ProcessDocuments
+        fields = ("bibliography_file",)
+        labels = {"bibliography_file": "Исправленный список литературы"}

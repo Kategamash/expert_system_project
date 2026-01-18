@@ -89,12 +89,14 @@ backend/templates/notifications/detail.html
 backend/templates/notifications/list.html
 backend/templates/partials/messages.html
 backend/templates/partials/nav.html
+backend/templates/publications/bibliography_rework.html
 backend/templates/publications/dashboard.html
 backend/templates/publications/library_tasks.html
 backend/templates/publications/oek_tasks.html
 backend/templates/publications/process_create.html
 backend/templates/publications/process_detail.html
 backend/templates/publications/process_list.html
+backend/templates/publications/reviewer_rework.html
 backend/templates/publications/reviewer_tasks.html
 backend/templates/publications/upload_consent.html
 docker-compose.yml
@@ -106,67 +108,39 @@ requirements.txt
 <files>
 This section contains the contents of the repository's files.
 
-<file path="backend/templates/notifications/detail.html">
+<file path="backend/templates/publications/bibliography_rework.html">
 {% extends "base.html" %}
 {% block content %}
-<h1>Уведомление</h1>
+<h1>Доработка списка литературы</h1>
 
 <div class="card">
-  <p><b>Дата:</b> {{ notification.created_at }}</p>
-  <p><b>Текст:</b> {{ notification.message }}</p>
-
-  {% if notification.link %}
-    <p><a class="btn btn--secondary" href="{{ notification.link }}">Перейти по ссылке</a></p>
-  {% endif %}
-
-  {% if process %}
-    <p><a class="btn" href="{% url 'publications:process_detail' process.pk %}">Открыть заявку</a></p>
-  {% endif %}
+  <p><b>Заявка:</b> #{{ process.pk }} — {{ process.title }}</p>
+  <p class="muted">Загрузите исправленный список литературы и отправьте на повторную проверку библиотеки.</p>
 </div>
 
-{% if library_comment %}
-  <div class="card">
-    <h3>Комментарий главы библиотеки</h3>
-    <p><b>Решение:</b> {{ library_comment.decision }}</p>
-    {% if library_comment.decided_at %}<p class="muted">{{ library_comment.decided_at }}</p>{% endif %}
-    <pre style="white-space: pre-wrap;">{{ library_comment.comment }}</pre>
-  </div>
-{% endif %}
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Отправить на повторную проверку</button>
+</form>
+{% endblock %}
+</file>
 
-{% if reviewer_comments %}
-  <div class="card">
-    <h3>Комментарии рецензеров</h3>
-    {% for rc in reviewer_comments %}
-      <div class="subcard">
-        <p><b>Рецензер:</b> {{ rc.reviewer }}</p>
-        <p><b>Вердикт:</b> {{ rc.verdict }}</p>
-        {% if rc.decided_at %}<p class="muted">{{ rc.decided_at }}</p>{% endif %}
-        <pre style="white-space: pre-wrap;">{{ rc.comment }}</pre>
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
+<file path="backend/templates/publications/reviewer_rework.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Доработка по замечаниям рецензеров</h1>
 
-{% if process and user.role == "AUTHOR" %}
-  {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
-    <div class="card">
-      <h3>Действие</h3>
-      <a class="btn" href="{% url 'publications:reviewer_rework' process.pk %}">
-        Загрузить исправления и отправить на повторное рецензирование
-      </a>
-    </div>
-  {% endif %}
+<div class="card">
+  <p><b>Заявка:</b> #{{ process.pk }} — {{ process.title }}</p>
+  <p class="muted">Загрузите исправленные файлы и отправьте на повторное рецензирование.</p>
+</div>
 
-  {% if process.status == "LIBRARY_NEEDS_FIX" %}
-    <div class="card">
-      <h3>Действие</h3>
-      <a class="btn" href="{% url 'publications:bibliography_rework' process.pk %}">
-        Загрузить исправленный список литературы и отправить на повторную проверку
-      </a>
-    </div>
-  {% endif %}
-{% endif %}
-
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Отправить на повторное рецензирование</button>
+</form>
 {% endblock %}
 </file>
 
@@ -638,153 +612,6 @@ def notifications_context(request):
 
 </file>
 
-<file path="backend/apps/notifications/migrations/0001_initial.py">
-from django.conf import settings
-from django.db import migrations, models
-import django.db.models.deletion
-
-
-class Migration(migrations.Migration):
-
-    initial = True
-
-    dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ]
-
-    operations = [
-        migrations.CreateModel(
-            name="Notification",
-            fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("message", models.CharField(max_length=500)),
-                ("link", models.CharField(blank=True, max_length=300)),
-                ("is_read", models.BooleanField(default=False)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="notifications", to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                "ordering": ("-created_at",),
-            },
-        ),
-    ]
-</file>
-
-<file path="backend/apps/notifications/models.py">
-from django.conf import settings
-from django.db import models
-
-
-class Notification(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
-    message = models.CharField(max_length=500)
-    link = models.CharField(max_length=300, blank=True)
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ("-created_at",)
-
-    def __str__(self):
-        return f"Notification({self.user_id}, read={self.is_read})"
-</file>
-
-<file path="backend/apps/notifications/urls.py">
-from django.urls import path
-from .views import notification_list, mark_read, mark_all_read, notification_detail
-
-app_name = "notifications"
-
-urlpatterns = [
-    path("", notification_list, name="list"),
-    path("<int:pk>/", notification_detail, name="detail"),  # ДОБАВИТЬ
-    path("read/<int:pk>/", mark_read, name="read"),
-    path("read-all/", mark_all_read, name="read_all"),
-]
-</file>
-
-<file path="backend/apps/notifications/utils.py">
-from .models import Notification
-
-def notify(user, message: str, link: str = "", process=None):
-    if user is None:
-        return
-    Notification.objects.create(user=user, message=message, link=link, process=process)
-</file>
-
-<file path="backend/apps/notifications/views.py">
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-
-from .models import Notification
-from apps.publications.models import ReviewerAssignment
-
-@login_required
-def notification_list(request):
-    qs = Notification.objects.filter(user=request.user)
-    return render(request, "notifications/list.html", {"notifications": qs})
-
-
-@login_required
-def notification_detail(request, pk: int):
-    n = get_object_or_404(Notification, pk=pk, user=request.user)
-
-    if not n.is_read:
-        n.is_read = True
-        n.save(update_fields=["is_read"])
-
-    process = n.process
-
-    reviewer_comments = []
-    library_comment = None
-
-    if process:
-        # Комментарии рецензеров (все непустые, не PENDING)
-        qs = (process.review_assignments
-              .exclude(comment="")
-              .exclude(verdict=ReviewerAssignment.Verdict.PENDING)
-              .select_related("reviewer")
-              .order_by("reviewer_id"))
-
-        for a in qs:
-            reviewer_comments.append({
-                "reviewer": a.reviewer.display_name(),
-                "verdict": a.get_verdict_display(),
-                "comment": a.comment,
-                "decided_at": a.decided_at,
-            })
-
-        # Комментарий библиотеки
-        ld = getattr(process, "library_decision", None)
-        if ld and ld.comment:
-            library_comment = {
-                "decision": ld.get_decision_display(),
-                "comment": ld.comment,
-                "decided_at": ld.decided_at,
-            }
-
-    return render(request, "notifications/detail.html", {
-        "notification": n,
-        "process": process,
-        "reviewer_comments": reviewer_comments,
-        "library_comment": library_comment,
-    })
-
-
-@login_required
-def mark_read(request, pk: int):
-    n = get_object_or_404(Notification, pk=pk, user=request.user)
-    n.is_read = True
-    n.save(update_fields=["is_read"])
-    return redirect("notifications:list")
-
-
-@login_required
-def mark_all_read(request):
-    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-    return redirect("notifications:list")
-</file>
-
 <file path="backend/apps/publications/__init__.py">
 
 </file>
@@ -931,6 +758,33 @@ class OEKDecisionForm(forms.ModelForm):
         model = OEKDecision
         fields = ("decision", "comment")
         labels = {"decision": "Решение", "comment": "Комментарий"}
+
+class ReviewerReworkUploadForm(forms.ModelForm):
+    class Meta:
+        model = ProcessDocuments
+        fields = ("article_file", "filled_template_file")
+        labels = {
+            "article_file": "Исправленный файл статьи/тезисов (если нужно)",
+            "filled_template_file": "Исправленный заполненный шаблон (если нужно)",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["article_file"].required = False
+        self.fields["filled_template_file"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("article_file") and not cleaned.get("filled_template_file"):
+            raise forms.ValidationError("Загрузите хотя бы один исправленный файл.")
+        return cleaned
+
+
+class BibliographyReworkUploadForm(forms.ModelForm):
+    class Meta:
+        model = ProcessDocuments
+        fields = ("bibliography_file",)
+        labels = {"bibliography_file": "Исправленный список литературы"}
 </file>
 
 <file path="backend/apps/publications/migrations/__init__.py">
@@ -1214,221 +1068,6 @@ class OEKDecision(models.Model):
         return f"OEKDecision(process={self.process_id}, {self.decision})"
 </file>
 
-<file path="backend/apps/publications/services.py">
-import random
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-
-from apps.notifications.utils import notify
-from .models import Process, LibraryDecision, ReviewerAssignment, OEKDecision
-
-User = get_user_model()
-
-
-def start_or_advance_after_creation(process: Process):
-    """
-    После создания заявки:
-    - если есть соавторы -> ждём согласия
-    - иначе -> отправляем в библиотеку
-    """
-    if process.coauthors.exists():
-        process.status = Process.Status.WAITING_COAUTHOR_CONSENTS
-        process.save(update_fields=["status"])
-        notify(process.author, f"Заявка #{process.pk}: загрузите согласия соавторов.", link=f"/process/{process.pk}/", process=process)
-    else:
-        send_to_library(process)
-
-
-def all_coauthor_consents_uploaded(process: Process) -> bool:
-    if not process.coauthors.exists():
-        return True
-    return all(bool(c.consent_file) for c in process.coauthors.all())
-
-
-def try_advance_after_coauthor_consents(process: Process):
-    if process.status != Process.Status.WAITING_COAUTHOR_CONSENTS:
-        return
-    if all_coauthor_consents_uploaded(process):
-        send_to_library(process)
-
-
-def send_to_library(process: Process):
-    process.status = Process.Status.LIBRARY_REVIEW
-    process.save(update_fields=["status"])
-
-    LibraryDecision.objects.get_or_create(process=process)
-
-    librarian = User.objects.filter(role=User.Role.LIBRARY_HEAD).order_by("id").first()
-    if librarian:
-        notify(librarian, f"Новая задача: проверить литературу по заявке #{process.pk}", link=f"/tasks/library/")
-    notify(process.author, f"Заявка #{process.pk} отправлена в библиотеку на проверку.", link=f"/process/{process.pk}/", process=process)
-
-
-def library_apply_decision(process: Process, approved: bool, comment: str, librarian: User):
-    ld, _ = LibraryDecision.objects.get_or_create(process=process)
-    ld.librarian = librarian
-    ld.comment = comment
-    ld.decided_at = timezone.now()
-
-    if approved:
-        ld.decision = LibraryDecision.Decision.APPROVED
-        ld.save()
-
-        if process.is_mifi:
-            assign_reviewers(process)
-        else:
-            send_to_oek(process)
-
-        notify(process.author, f"Библиотека согласовала заявку #{process.pk}.", link=f"/process/{process.pk}/", process=process)
-    else:
-        ld.decision = LibraryDecision.Decision.REJECTED
-        ld.save()
-        process.status = Process.Status.LIBRARY_NEEDS_FIX
-        process.save(update_fields=["status"])
-        notify(process.author, f"Библиотека отклонила заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
-
-
-def reset_reviewers(process: Process):
-    # set all to pending, clear decided_at/comment/verdict
-    for a in process.review_assignments.all():
-        a.verdict = ReviewerAssignment.Verdict.PENDING
-        a.comment = ""
-        a.decided_at = None
-        a.save()
-
-
-def assign_reviewers(process: Process):
-    process.status = Process.Status.INTERNAL_REVIEW
-    process.save(update_fields=["status"])
-
-    reviewers = list(User.objects.filter(role=User.Role.REVIEWER).order_by("id"))
-    if len(reviewers) < 3:
-        # fallback: assign whoever exists
-        chosen = reviewers
-    else:
-        chosen = random.sample(reviewers, 3)
-
-    # Create assignments (idempotent-ish)
-    for r in chosen:
-        ReviewerAssignment.objects.get_or_create(process=process, reviewer=r)
-
-    for r in chosen:
-        notify(r, f"Новая рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
-
-    notify(process.author, f"Заявка #{process.pk} отправлена на внутреннее рецензирование.", link=f"/process/{process.pk}/", process=process)
-
-
-def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
-    assignment.verdict = verdict
-    assignment.comment = comment
-    assignment.decided_at = timezone.now()
-    assignment.save()
-
-    process = assignment.process
-    notify(process.author, f"Получена рецензия по заявке #{process.pk} от {assignment.reviewer.display_name()}.", link=f"/process/{process.pk}/", process=process)
-
-    # If all decided -> finalize stage
-    if process.review_assignments.filter(verdict=ReviewerAssignment.Verdict.PENDING).exists():
-        return
-
-    verdicts = list(process.review_assignments.values_list("verdict", flat=True))
-    not_rec = verdicts.count(ReviewerAssignment.Verdict.NOT_RECOMMEND)
-    after_fix = verdicts.count(ReviewerAssignment.Verdict.RECOMMEND_AFTER_FIX)
-    rec = verdicts.count(ReviewerAssignment.Verdict.RECOMMEND)
-
-    # rule: if 2 of 3 NOT -> rejected
-    if not_rec >= 2:
-        process.status = Process.Status.REJECTED
-        process.save(update_fields=["status"])
-        notify(process.author, f"Заявка #{process.pk} отклонена по результатам рецензирования (>=2 'Не рекомендовать').", link=f"/process/{process.pk}/", process=process)
-        return
-
-    # if any AFTER_FIX -> needs fix
-    if after_fix >= 1:
-        process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
-        process.save(update_fields=["status"])
-        notify(process.author, f"Заявка #{process.pk}: требуется исправление по рецензиям и повторная отправка.", link=f"/process/{process.pk}/", process=process)
-        return
-
-    # else if 2 recommend -> go next
-    if rec >= 2:
-        send_to_oek(process)
-        return
-
-    # fallback
-    process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
-    process.save(update_fields=["status"])
-    notify(process.author, f"Заявка #{process.pk}: требуется уточнение/исправление по рецензиям.", link=f"/process/{process.pk}/", process=process)
-
-
-def author_resubmit_after_internal_fix(process: Process):
-    """
-    Автор исправил материалы и отправляет снова тем же рецензентам.
-    """
-    if process.status != Process.Status.INTERNAL_REVIEW_NEEDS_FIX:
-        return
-    reset_reviewers(process)
-    process.status = Process.Status.INTERNAL_REVIEW
-    process.save(update_fields=["status"])
-    for a in process.review_assignments.all():
-        notify(a.reviewer, f"Повторная рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
-    notify(process.author, f"Заявка #{process.pk} отправлена на повторное рецензирование.", link=f"/process/{process.pk}/", process=process)
-
-
-def send_to_oek(process: Process):
-    process.status = Process.Status.OEK_REVIEW
-    process.save(update_fields=["status"])
-
-    OEKDecision.objects.get_or_create(process=process)
-
-    oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
-    if oek_user:
-        notify(oek_user, f"Новая задача ОЭК: проверить заявку #{process.pk}", link=f"/tasks/oek/")
-    notify(process.author, f"Заявка #{process.pk} отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
-
-
-def oek_apply_decision(process: Process, approved: bool, comment: str, oek_user: User, defense_datetime=None, defense_room=""):
-    od, _ = OEKDecision.objects.get_or_create(process=process)
-    od.oek_user = oek_user
-    od.comment = comment
-    od.decided_at = timezone.now()
-
-    if approved:
-        od.decision = OEKDecision.Decision.APPROVED
-        od.save()
-
-        process.status = Process.Status.READY_FOR_DEFENSE
-        if defense_datetime:
-            process.defense_datetime = defense_datetime
-        if defense_room is not None:
-            process.defense_room = defense_room
-        process.save(update_fields=["status", "defense_datetime", "defense_room"])
-
-        notify(process.author, f"ОЭК согласовал заявку #{process.pk}. Статус: готово к защите.", link=f"/process/{process.pk}/", process=process)
-
-        # notify commission members
-        commission_users = User.objects.filter(role=User.Role.COMMISSION)
-        for u in commission_users:
-            notify(u, f"Новая заявка готова к защите: #{process.pk}", link=f"/process/{process.pk}/")
-    else:
-        od.decision = OEKDecision.Decision.REJECTED
-        od.save()
-        process.status = Process.Status.OEK_NEEDS_FIX
-        process.save(update_fields=["status"])
-        notify(process.author, f"ОЭК отклонил заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
-
-
-def author_resubmit_after_oek_fix(process: Process):
-    if process.status != Process.Status.OEK_NEEDS_FIX:
-        return
-    process.status = Process.Status.OEK_REVIEW
-    process.save(update_fields=["status"])
-    oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
-    if oek_user:
-        notify(oek_user, f"Повторная проверка ОЭК: заявка #{process.pk}", link=f"/tasks/oek/")
-    notify(process.author, f"Заявка #{process.pk} повторно отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
-</file>
-
 <file path="backend/apps/publications/urls.py">
 from django.urls import path
 from .views import (
@@ -1439,6 +1078,7 @@ from .views import (
     library_tasks, library_decide,
     reviewer_tasks, reviewer_submit_view,
     oek_tasks, oek_decide_view,
+    reviewer_rework_view, bibliography_rework_view,
 )
 
 app_name = "publications"
@@ -1461,6 +1101,9 @@ urlpatterns = [
 
     path("tasks/oek/", oek_tasks, name="oek_tasks"),
     path("tasks/oek/<int:pk>/decide/", oek_decide_view, name="oek_decide"),
+
+    path("process/<int:pk>/rework/reviewer/", reviewer_rework_view, name="reviewer_rework"),
+    path("process/<int:pk>/rework/bibliography/", bibliography_rework_view, name="bibliography_rework"),
 ]
 </file>
 
@@ -1477,9 +1120,10 @@ from apps.notifications.utils import notify
 
 from .forms import (
     ProcessCreateForm, DocumentsForm, CoAuthorFormSet,
-    UploadConsentForm, LibraryDecisionForm, ReviewerVerdictForm, OEKDecisionForm
+    UploadConsentForm, LibraryDecisionForm, ReviewerVerdictForm, OEKDecisionForm,
+    ReviewerReworkUploadForm, BibliographyReworkUploadForm,
 )
-from .models import Process, PublicationTemplate, CoAuthor, ReviewerAssignment
+from .models import Process, PublicationTemplate, CoAuthor, ReviewerAssignment, ProcessDocuments
 from .services import (
     start_or_advance_after_creation,
     try_advance_after_coauthor_consents,
@@ -1488,6 +1132,7 @@ from .services import (
     author_resubmit_after_internal_fix,
     oek_apply_decision,
     author_resubmit_after_oek_fix,
+    author_resubmit_after_library_fix,
 )
 
 
@@ -1751,6 +1396,52 @@ def oek_decide_view(request, pk: int):
         })
 
     return render(request, "publications/process_detail.html", {"process": process, "oek_form": form})
+
+@login_required
+def reviewer_rework_view(request, pk: int):
+    process = get_object_or_404(Process, pk=pk, author=request.user)
+
+    if process.status != Process.Status.INTERNAL_REVIEW_NEEDS_FIX:
+        messages.warning(request, "Эта заявка сейчас не на этапе доработки по рецензиям.")
+        return redirect("publications:process_detail", pk=process.pk)
+
+    docs = process.documents
+
+    if request.method == "POST":
+        form = ReviewerReworkUploadForm(request.POST, request.FILES, instance=docs)
+        if form.is_valid():
+            form.save()
+            author_resubmit_after_internal_fix(process)
+            messages.success(request, "Файлы обновлены и заявка отправлена на повторное рецензирование.")
+            return redirect("publications:process_detail", pk=process.pk)
+    else:
+        form = ReviewerReworkUploadForm(instance=docs)
+
+    return render(request, "publications/reviewer_rework.html", {"process": process, "form": form})
+
+
+@login_required
+def bibliography_rework_view(request, pk: int):
+    process = get_object_or_404(Process, pk=pk, author=request.user)
+
+    if process.status != Process.Status.LIBRARY_NEEDS_FIX:
+        messages.warning(request, "Эта заявка сейчас не на этапе доработки по библиотеке.")
+        return redirect("publications:process_detail", pk=process.pk)
+
+    docs = process.documents
+
+    if request.method == "POST":
+        form = BibliographyReworkUploadForm(request.POST, request.FILES, instance=docs)
+        if form.is_valid():
+            form.save()
+            # вызовем сервис, который вернёт в LIBRARY_REVIEW и создаст задачу библиотеке
+            author_resubmit_after_library_fix(process)
+            messages.success(request, "Список литературы обновлён и отправлен на повторную проверку библиотеки.")
+            return redirect("publications:process_detail", pk=process.pk)
+    else:
+        form = BibliographyReworkUploadForm(instance=docs)
+
+    return render(request, "publications/bibliography_rework.html", {"process": process, "form": form})
 </file>
 
 <file path="backend/config/__init__.py">
@@ -2097,30 +1788,67 @@ label { font-weight: 600; }
 </html>
 </file>
 
-<file path="backend/templates/notifications/list.html">
+<file path="backend/templates/notifications/detail.html">
 {% extends "base.html" %}
 {% block content %}
-<h1>Уведомления</h1>
+<h1>Уведомление</h1>
 
-<div class="actions">
-  <a class="btn btn--secondary" href="{% url 'notifications:read_all' %}">Отметить все как прочитанные</a>
+<div class="card">
+  <p><b>Дата:</b> {{ notification.created_at }}</p>
+  <p><b>Текст:</b> {{ notification.message }}</p>
+
+  {% if notification.link %}
+    <p><a class="btn btn--secondary" href="{{ notification.link }}">Перейти по ссылке</a></p>
+  {% endif %}
+
+  {% if process %}
+    <p><a class="btn" href="{% url 'publications:process_detail' process.pk %}">Открыть заявку</a></p>
+  {% endif %}
 </div>
 
-{% if notifications %}
-  <ul class="list">
-    {% for n in notifications %}
-      <li class="{% if not n.is_read %}unread{% endif %}">
-        <div>
-          <b>{{ n.created_at }}</b> — {{ n.message }}
-          | <a href="{% url 'notifications:detail' n.pk %}">открыть</a>
-          | <a href="{% url 'notifications:read' n.pk %}">отметить прочитанным</a>
-        </div>
-      </li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p class="muted">Уведомлений нет.</p>
+{% if library_comment %}
+  <div class="card">
+    <h3>Комментарий главы библиотеки</h3>
+    <p><b>Решение:</b> {{ library_comment.decision }}</p>
+    {% if library_comment.decided_at %}<p class="muted">{{ library_comment.decided_at }}</p>{% endif %}
+    <pre style="white-space: pre-wrap;">{{ library_comment.comment }}</pre>
+  </div>
 {% endif %}
+
+{% if reviewer_comments %}
+  <div class="card">
+    <h3>Комментарии рецензеров</h3>
+    {% for rc in reviewer_comments %}
+      <div class="subcard">
+        <p><b>Рецензер:</b> {{ rc.reviewer }}</p>
+        <p><b>Вердикт:</b> {{ rc.verdict }}</p>
+        {% if rc.decided_at %}<p class="muted">{{ rc.decided_at }}</p>{% endif %}
+        <pre style="white-space: pre-wrap;">{{ rc.comment }}</pre>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if process and user.role == "AUTHOR" %}
+  {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
+    <div class="card">
+      <h3>Действие</h3>
+      <a class="btn" href="{% url 'publications:reviewer_rework' process.pk %}">
+        Загрузить исправления и отправить на повторное рецензирование
+      </a>
+    </div>
+  {% endif %}
+
+  {% if process.status == "LIBRARY_NEEDS_FIX" %}
+    <div class="card">
+      <h3>Действие</h3>
+      <a class="btn" href="{% url 'publications:bibliography_rework' process.pk %}">
+        Загрузить исправленный список литературы и отправить на повторную проверку
+      </a>
+    </div>
+  {% endif %}
+{% endif %}
+
 {% endblock %}
 </file>
 
@@ -2420,12 +2148,19 @@ function addCoauthorRow() {
 
 {% if user.role == "AUTHOR" %}
   {% if process.status == "INTERNAL_REVIEW_NEEDS_FIX" %}
-    <form method="post" class="card">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="resubmit_internal">
-      <button class="btn" type="submit">Отправить на повторное рецензирование</button>
-      <p class="muted">Предполагается, что вы заменили файлы (в MVP — через admin; в расширении можно сделать форму перезагрузки).</p>
-    </form>
+    <div class="card">
+      <a class="btn" href="{% url 'publications:reviewer_rework' process.pk %}">
+        Загрузить исправления и отправить на повторное рецензирование
+      </a>
+    </div>
+  {% endif %}
+
+  {% if process.status == "LIBRARY_NEEDS_FIX" %}
+    <div class="card">
+      <a class="btn" href="{% url 'publications:bibliography_rework' process.pk %}">
+        Загрузить исправленный список литературы и отправить на повторную проверку
+      </a>
+    </div>
   {% endif %}
 
   {% if process.status == "OEK_NEEDS_FIX" %}
@@ -2595,6 +2330,433 @@ gunicorn==21.2.0
 psycopg2-binary==2.9.9
 whitenoise==6.6.0
 python-dotenv==1.0.1
+</file>
+
+<file path="backend/apps/notifications/migrations/0001_initial.py">
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        ('publications', '0001_initial'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="Notification",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("message", models.CharField(max_length=500)),
+                ("link", models.CharField(blank=True, max_length=300)),
+                ("is_read", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("process", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name="notifications", to="publications.process")),
+                ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="notifications", to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                "ordering": ("-created_at",),
+            },
+        ),
+    ]
+</file>
+
+<file path="backend/apps/notifications/models.py">
+from django.conf import settings
+from django.db import models
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    message = models.CharField(max_length=500)
+    link = models.CharField(max_length=300, blank=True)
+
+    process = models.ForeignKey(
+        "publications.Process",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Notification({self.user_id}, read={self.is_read})"
+</file>
+
+<file path="backend/apps/notifications/urls.py">
+from django.urls import path
+from .views import notification_list, mark_read, mark_all_read, notification_detail
+
+app_name = "notifications"
+
+urlpatterns = [
+    path("", notification_list, name="list"),
+    path("<int:pk>/", notification_detail, name="detail"),  # ДОБАВИТЬ
+    path("read/<int:pk>/", mark_read, name="read"),
+    path("read-all/", mark_all_read, name="read_all"),
+]
+</file>
+
+<file path="backend/apps/notifications/utils.py">
+from .models import Notification
+
+def notify(user, message: str, link: str = "", process=None):
+    if user is None:
+        return
+    Notification.objects.create(user=user, message=message, link=link, process=process)
+</file>
+
+<file path="backend/apps/notifications/views.py">
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+
+from .models import Notification
+from apps.publications.models import ReviewerAssignment
+
+@login_required
+def notification_list(request):
+    qs = Notification.objects.filter(user=request.user)
+    return render(request, "notifications/list.html", {"notifications": qs})
+
+
+@login_required
+def notification_detail(request, pk: int):
+    n = get_object_or_404(Notification, pk=pk, user=request.user)
+
+    if not n.is_read:
+        n.is_read = True
+        n.save(update_fields=["is_read"])
+
+    process = n.process
+
+    reviewer_comments = []
+    library_comment = None
+
+    if process:
+        # Комментарии рецензеров (все непустые, не PENDING)
+        qs = (process.review_assignments
+              .exclude(comment="")
+              .exclude(verdict=ReviewerAssignment.Verdict.PENDING)
+              .select_related("reviewer")
+              .order_by("reviewer_id"))
+
+        for a in qs:
+            reviewer_comments.append({
+                "reviewer": a.reviewer.display_name(),
+                "verdict": a.get_verdict_display(),
+                "comment": a.comment,
+                "decided_at": a.decided_at,
+            })
+
+        # Комментарий библиотеки
+        ld = getattr(process, "library_decision", None)
+        if ld and ld.comment:
+            library_comment = {
+                "decision": ld.get_decision_display(),
+                "comment": ld.comment,
+                "decided_at": ld.decided_at,
+            }
+
+    return render(request, "notifications/detail.html", {
+        "notification": n,
+        "process": process,
+        "reviewer_comments": reviewer_comments,
+        "library_comment": library_comment,
+    })
+
+
+@login_required
+def mark_read(request, pk: int):
+    n = get_object_or_404(Notification, pk=pk, user=request.user)
+    n.is_read = True
+    n.save(update_fields=["is_read"])
+    return redirect("notifications:list")
+
+
+@login_required
+def mark_all_read(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect("notifications:list")
+</file>
+
+<file path="backend/apps/publications/services.py">
+import random
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from apps.notifications.utils import notify
+from .models import Process, LibraryDecision, ReviewerAssignment, OEKDecision
+
+User = get_user_model()
+
+
+def start_or_advance_after_creation(process: Process):
+    """
+    После создания заявки:
+    - если есть соавторы -> ждём согласия
+    - иначе -> отправляем в библиотеку
+    """
+    if process.coauthors.exists():
+        process.status = Process.Status.WAITING_COAUTHOR_CONSENTS
+        process.save(update_fields=["status"])
+        notify(process.author, f"Заявка #{process.pk}: загрузите согласия соавторов.", link=f"/process/{process.pk}/", process=process)
+    else:
+        send_to_library(process)
+
+
+def all_coauthor_consents_uploaded(process: Process) -> bool:
+    if not process.coauthors.exists():
+        return True
+    return all(bool(c.consent_file) for c in process.coauthors.all())
+
+
+def try_advance_after_coauthor_consents(process: Process):
+    if process.status != Process.Status.WAITING_COAUTHOR_CONSENTS:
+        return
+    if all_coauthor_consents_uploaded(process):
+        send_to_library(process)
+
+
+def send_to_library(process: Process):
+    process.status = Process.Status.LIBRARY_REVIEW
+    process.save(update_fields=["status"])
+
+    LibraryDecision.objects.get_or_create(process=process)
+
+    librarian = User.objects.filter(role=User.Role.LIBRARY_HEAD).order_by("id").first()
+    if librarian:
+        notify(librarian, f"Новая задача: проверить литературу по заявке #{process.pk}", link=f"/tasks/library/")
+    notify(process.author, f"Заявка #{process.pk} отправлена в библиотеку на проверку.", link=f"/process/{process.pk}/", process=process)
+
+
+def library_apply_decision(process: Process, approved: bool, comment: str, librarian: User):
+    ld, _ = LibraryDecision.objects.get_or_create(process=process)
+    ld.librarian = librarian
+    ld.comment = comment
+    ld.decided_at = timezone.now()
+
+    if approved:
+        ld.decision = LibraryDecision.Decision.APPROVED
+        ld.save()
+
+        if process.is_mifi:
+            assign_reviewers(process)
+        else:
+            send_to_oek(process)
+
+        notify(process.author, f"Библиотека согласовала заявку #{process.pk}.", link=f"/process/{process.pk}/", process=process)
+    else:
+        ld.decision = LibraryDecision.Decision.REJECTED
+        ld.save()
+        process.status = Process.Status.LIBRARY_NEEDS_FIX
+        process.save(update_fields=["status"])
+        notify(process.author, f"Библиотека отклонила заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
+
+
+def reset_reviewers(process: Process):
+    # set all to pending, clear decided_at/comment/verdict
+    for a in process.review_assignments.all():
+        a.verdict = ReviewerAssignment.Verdict.PENDING
+        a.comment = ""
+        a.decided_at = None
+        a.save()
+
+
+def assign_reviewers(process: Process):
+    process.status = Process.Status.INTERNAL_REVIEW
+    process.save(update_fields=["status"])
+
+    reviewers = list(User.objects.filter(role=User.Role.REVIEWER).order_by("id"))
+    if len(reviewers) < 3:
+        # fallback: assign whoever exists
+        chosen = reviewers
+    else:
+        chosen = random.sample(reviewers, 3)
+
+    # Create assignments (idempotent-ish)
+    for r in chosen:
+        ReviewerAssignment.objects.get_or_create(process=process, reviewer=r)
+
+    for r in chosen:
+        notify(r, f"Новая рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
+
+    notify(process.author, f"Заявка #{process.pk} отправлена на внутреннее рецензирование.", link=f"/process/{process.pk}/", process=process)
+
+
+def reviewer_submit(assignment: ReviewerAssignment, verdict: str, comment: str):
+    assignment.verdict = verdict
+    assignment.comment = comment
+    assignment.decided_at = timezone.now()
+    assignment.save()
+
+    process = assignment.process
+    notify(process.author, f"Получена рецензия по заявке #{process.pk} от {assignment.reviewer.display_name()}.", link=f"/process/{process.pk}/", process=process)
+
+    # If all decided -> finalize stage
+    if process.review_assignments.filter(verdict=ReviewerAssignment.Verdict.PENDING).exists():
+        return
+
+    verdicts = list(process.review_assignments.values_list("verdict", flat=True))
+    not_rec = verdicts.count(ReviewerAssignment.Verdict.NOT_RECOMMEND)
+    after_fix = verdicts.count(ReviewerAssignment.Verdict.RECOMMEND_AFTER_FIX)
+    rec = verdicts.count(ReviewerAssignment.Verdict.RECOMMEND)
+
+    # rule: if 2 of 3 NOT -> rejected
+    if not_rec >= 2:
+        process.status = Process.Status.REJECTED
+        process.save(update_fields=["status"])
+        notify(process.author, f"Заявка #{process.pk} отклонена по результатам рецензирования (>=2 'Не рекомендовать').", link=f"/process/{process.pk}/", process=process)
+        return
+
+    # if any AFTER_FIX -> needs fix
+    if after_fix >= 1:
+        process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
+        process.save(update_fields=["status"])
+        notify(process.author, f"Заявка #{process.pk}: требуется исправление по рецензиям и повторная отправка.", link=f"/process/{process.pk}/", process=process)
+        return
+
+    # else if 2 recommend -> go next
+    if rec >= 2:
+        send_to_oek(process)
+        return
+
+    # fallback
+    process.status = Process.Status.INTERNAL_REVIEW_NEEDS_FIX
+    process.save(update_fields=["status"])
+    notify(process.author, f"Заявка #{process.pk}: требуется уточнение/исправление по рецензиям.", link=f"/process/{process.pk}/", process=process)
+
+
+def author_resubmit_after_internal_fix(process: Process):
+    """
+    Автор исправил материалы и отправляет снова тем же рецензентам.
+    """
+    if process.status != Process.Status.INTERNAL_REVIEW_NEEDS_FIX:
+        return
+    reset_reviewers(process)
+    process.status = Process.Status.INTERNAL_REVIEW
+    process.save(update_fields=["status"])
+    for a in process.review_assignments.all():
+        notify(a.reviewer, f"Повторная рецензия: заявка #{process.pk}", link=f"/tasks/reviewer/")
+    notify(process.author, f"Заявка #{process.pk} отправлена на повторное рецензирование.", link=f"/process/{process.pk}/", process=process)
+
+
+def send_to_oek(process: Process):
+    process.status = Process.Status.OEK_REVIEW
+    process.save(update_fields=["status"])
+
+    OEKDecision.objects.get_or_create(process=process)
+
+    oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
+    if oek_user:
+        notify(oek_user, f"Новая задача ОЭК: проверить заявку #{process.pk}", link=f"/tasks/oek/")
+    notify(process.author, f"Заявка #{process.pk} отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
+
+
+def oek_apply_decision(process: Process, approved: bool, comment: str, oek_user: User, defense_datetime=None, defense_room=""):
+    od, _ = OEKDecision.objects.get_or_create(process=process)
+    od.oek_user = oek_user
+    od.comment = comment
+    od.decided_at = timezone.now()
+
+    if approved:
+        od.decision = OEKDecision.Decision.APPROVED
+        od.save()
+
+        process.status = Process.Status.READY_FOR_DEFENSE
+        if defense_datetime:
+            process.defense_datetime = defense_datetime
+        if defense_room is not None:
+            process.defense_room = defense_room
+        process.save(update_fields=["status", "defense_datetime", "defense_room"])
+
+        notify(process.author, f"ОЭК согласовал заявку #{process.pk}. Статус: готово к защите.", link=f"/process/{process.pk}/", process=process)
+
+        # notify commission members
+        commission_users = User.objects.filter(role=User.Role.COMMISSION)
+        for u in commission_users:
+            notify(u, f"Новая заявка готова к защите: #{process.pk}", link=f"/process/{process.pk}/")
+    else:
+        od.decision = OEKDecision.Decision.REJECTED
+        od.save()
+        process.status = Process.Status.OEK_NEEDS_FIX
+        process.save(update_fields=["status"])
+        notify(process.author, f"ОЭК отклонил заявку #{process.pk}. Комментарий: {comment}", link=f"/process/{process.pk}/", process=process)
+
+
+def author_resubmit_after_oek_fix(process: Process):
+    if process.status != Process.Status.OEK_NEEDS_FIX:
+        return
+    process.status = Process.Status.OEK_REVIEW
+    process.save(update_fields=["status"])
+    oek_user = User.objects.filter(role=User.Role.OEK).order_by("id").first()
+    if oek_user:
+        notify(oek_user, f"Повторная проверка ОЭК: заявка #{process.pk}", link=f"/tasks/oek/")
+    notify(process.author, f"Заявка #{process.pk} повторно отправлена в ОЭК.", link=f"/process/{process.pk}/", process=process)
+
+def author_resubmit_after_library_fix(process: Process):
+    """
+    Автор загрузил исправленный список литературы и отправляет снова в библиотеку.
+    """
+    if process.status != Process.Status.LIBRARY_NEEDS_FIX:
+        return
+
+    # сбрасываем решение библиотеки в ожидание
+    ld, _ = LibraryDecision.objects.get_or_create(process=process)
+    ld.decision = LibraryDecision.Decision.PENDING
+    ld.decided_at = None
+    ld.save(update_fields=["decision", "decided_at"])
+
+    process.status = Process.Status.LIBRARY_REVIEW
+    process.save(update_fields=["status"])
+
+    librarian = User.objects.filter(role=User.Role.LIBRARY_HEAD).order_by("id").first()
+    if librarian:
+        notify(librarian, f"Повторная проверка: литература по заявке #{process.pk}", link=f"/tasks/library/")
+
+    notify(
+        process.author,
+        f"Заявка #{process.pk} повторно отправлена в библиотеку на проверку.",
+        link=f"/process/{process.pk}/",
+        process=process,
+    )
+</file>
+
+<file path="backend/templates/notifications/list.html">
+{% extends "base.html" %}
+{% block content %}
+<h1>Уведомления</h1>
+
+<div class="actions">
+  <a class="btn btn--secondary" href="{% url 'notifications:read_all' %}">Отметить все как прочитанные</a>
+</div>
+
+{% if notifications %}
+  <ul class="list">
+    {% for n in notifications %}
+      <li class="{% if not n.is_read %}unread{% endif %}">
+        <div>
+          <b>{{ n.created_at }}</b> — {{ n.message }}
+          | <a href="{% url 'notifications:detail' n.pk %}">открыть</a>
+          | <a href="{% url 'notifications:read' n.pk %}">отметить прочитанным</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">Уведомлений нет.</p>
+{% endif %}
+{% endblock %}
 </file>
 
 </files>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Доработка списка литературы</h1>
+
+<div class="card">
+  <p><b>Заявка:</b> #{{ process.pk }} — {{ process.title }}</p>
+  <p class="muted">Загрузите исправленный список литературы и отправьте на повторную проверку библиотеки.</p>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Отправить на повторную проверку</button>
+</form>
+{% endblock %}

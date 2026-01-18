@@ -7,6 +7,7 @@ from .views import (
     library_tasks, library_decide,
     reviewer_tasks, reviewer_submit_view,
     oek_tasks, oek_decide_view,
+    reviewer_rework_view, bibliography_rework_view,
 )
 
 app_name = "publications"
@@ -29,4 +30,7 @@ urlpatterns = [
 
     path("tasks/oek/", oek_tasks, name="oek_tasks"),
     path("tasks/oek/<int:pk>/decide/", oek_decide_view, name="oek_decide"),
+
+    path("process/<int:pk>/rework/reviewer/", reviewer_rework_view, name="reviewer_rework"),
+    path("process/<int:pk>/rework/bibliography/", bibliography_rework_view, name="bibliography_rework"),
 ]
